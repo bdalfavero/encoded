@@ -9,7 +9,12 @@ def encoding_repetition(state: str, n: int):
     if state == "0":
         for q in qubits:
             circuit.append(cirq.I.on(q))
+    elif state == "+":
+        circuit.append(cirq.H(qubits[0]))
+        for i in range(len(qubits) - 1):
+            circuit.append(cirq.CNOT(qubits[i], qubits[i+1]))
     else:
+        assert state == '1'
         for q in qubits:
             circuit.append(cirq.X.on(q))
 
