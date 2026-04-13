@@ -49,3 +49,25 @@ def cirq_pauli_string_to_stim(cirq_pauli: cirq.PauliString, qs: Optional[List[ci
         else:
             sign_str = '-i'
     return stim.PauliString(sign_str + ''.join(pauli_chars))
+
+def get_observables(
+    stabilizers: list[stim.PauliString],
+) -> list[tuple[stim.PauliString, stim.PauliString]]:
+    """See
+    https://quantumcomputing.stackexchange.com/questions/37812/how-to-find-a-set-of-independent-logical-operators-for-a-stabilizer-code-with-st"""
+    
+    completed_tableau = stim.Tableau.from_stabilizers(
+        stabilizers,
+        allow_redundant=True,
+        allow_underconstrained=True,
+    )
+
+    observables = []
+    for k in range(len(completed_tableau))[::-1]:
+        z = completed_tableau.z_output(k)
+        if z in stabilizers:
+            break
+        x = completed_tableau.x_output(k)
+        observables.append((x, z))
+
+    return observables
