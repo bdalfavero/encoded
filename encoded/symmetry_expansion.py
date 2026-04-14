@@ -1,19 +1,30 @@
-from typing import List
+from typing import List, Optional
+import numpy as np
 from cirq import Simulator, Circuit, PauliSum
 import cirq
 
-def symmetry_expansion(ckt: Circuit, observable: PauliSum, group_ops: List[PauliSum], sim=Simulator()) -> float:
+def symmetry_expansion(
+    ckt: Circuit, observable: PauliSum, group_ops: List[PauliSum], sim=Simulator(),
+    shots: Optional[int]=None, return_terms=False
+) -> float:
     """Do symmetry expansion by summing over group elements."""
 
     # sim = Simulator()
     expectations = [] # Expectation of OG for G in group.
     denominators = [] # Expectation of G for G in group.
     for g in group_ops:
-        expectation = sim.simulate_expectation_values(ckt, [observable * g])[0]
-        denominator = sim.simulate_expectation_values(ckt, [g])[0]
+        if shots is None:
+            expectation = sim.simulate_expectation_values(ckt, [observable * g])[0]
+            denominator = sim.simulate_expectation_values(ckt, [g])[0]
+        else:
+            expectation = sim.sample_expectation_values(ckt, [observable * g], num_samples=shots)[0]
+            denominator = sim.sample_expectation_values(ckt, [g], num_samples=shots)[0]
         expectations.append(expectation)
         denominators.append(denominator)
-    return sum(expectations) / sum(denominators)
+    if return_terms:
+        return sum(expectations).real / sum(denominators).real, expectations, denominators
+    else:
+        return sum(expectations).real / sum(denominators).real
 
 if __name__ == "__main__":
     qs = cirq.LineQubit.range(2)
