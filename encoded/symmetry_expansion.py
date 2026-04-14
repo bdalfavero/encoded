@@ -17,8 +17,10 @@ def symmetry_expansion(
             expectation = sim.simulate_expectation_values(ckt, [observable * g])[0]
             denominator = sim.simulate_expectation_values(ckt, [g])[0]
         else:
-            expectation = sim.sample_expectation_values(ckt, [observable * g], num_samples=shots)[0][0]
-            denominator = sim.sample_expectation_values(ckt, [g], num_samples=shots)[0][0]
+            expectation_result = sim.sample_expectation_values(ckt, [observable * g], num_samples=shots)
+            expectation = expectation_result[0][0]
+            denominator_result = sim.sample_expectation_values(ckt, [g], num_samples=shots)
+            denominator = denominator_result[0][0]
         expectations.append(expectation)
         denominators.append(denominator)
     if return_terms:
