@@ -1,4 +1,5 @@
-from typing import List
+from typing import List, Tuple
+from math import prod
 import numpy as np
 from scipy.optimize import milp, LinearConstraint
 import stim
@@ -64,7 +65,10 @@ def _boolean_backsub_solve(A_rref: np.ndarray, b_rref: np.ndarray) -> np.ndarray
 
 def solve_boolean_system(A, b):
     A_rref, b_rref = _boolean_rref(A, b)
+    print("A_rref=\n", A_rref)
+    print("b_rref=\n", b_rref)
     x = _boolean_backsub_solve(A_rref, b_rref)
+    print("x=\n", x)
     return x
 
 
@@ -89,3 +93,30 @@ def decompose_operator_to_product(pstring: stim.PauliString, generators: List[st
         if xi:
             pstring_generators.append(generators[i])
     return pstring_generators
+
+
+# TODO stim.PauliString is unhashable, but this would be easier with dictionaries.
+def decompose_pauli_to_logical_operators(
+    pstring: stim.PauliString, logical_op_map: List[Tuple[stim.PauliString, stim.PauliString]], stabilizers: List[stim.PauliString]
+) -> stim.PauliString:
+    """Convert a Pauli string acting on the physical qubits of a code into a logical Pauli operator.
+    
+    Arguments:
+    pstring - The operator acting on the physical qubits of the code.
+    logical_op_map - List of tuples (logical operator, physical operator).
+    stabilizers - The stabilizer generators of the code."""
+
+    all_generators = [t[1] for t in logical_op_map] + stabilizers
+    generators_of_ps = decompose_operator_to_product(pstring, all_generators)
+    logical_components = []
+    for gen in generators_of_ps:
+        for logical_op, physical_op in logical_op_map:
+            if physical_op == gen:
+                logical_components.append(logical_op)
+    nq_logical = max([len(t[0]) for t in logical_op_map])
+    nq_physical = len(pstring)
+    logical_id = stim.PauliString("+" + "_" * nq_logical)
+    physical_id = stim.PauliString("+" + "_" * nq_physical)
+    logical_ps = prod(logical_components, start=logical_id)
+    component_product = prod(generators_of_ps, start=physical_id)
+    return logical_ps * pstring.sign / component_product.sign

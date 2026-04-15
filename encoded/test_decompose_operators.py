@@ -2,8 +2,10 @@ import unittest
 import numpy as np
 import stim
 from encoded.decompose_operators import (
-    _boolean_rref, _boolean_backsub_solve, solve_boolean_system,
-    decompose_operator_to_product
+    _boolean_rref, _boolean_backsub_solve,
+    solve_boolean_system,
+    decompose_operator_to_product,
+    decompose_pauli_to_logical_operators
 )
 
 class TestRREF(unittest.TestCase):
@@ -125,7 +127,66 @@ class TestDecompose(unittest.TestCase):
         target_generators = [stim.PauliString("IX"), stim.PauliString("IZ")]
         self.assertEqual(target_generators, pstring_generators)
 
+    def test_repetition_code_y_bar_ziz(self):
+        generators = [
+            stim.PauliString("ZZI"),
+            stim.PauliString("ZIZ"),
+            stim.PauliString("XXX"),
+            stim.PauliString("ZII")
+        ]
+        pstring = stim.PauliString("-XXY")
+        target_generators = [
+            stim.PauliString("ZIZ"),
+            stim.PauliString("XXX"),
+            stim.PauliString("ZII")
+        ]
+        pstring_generators = decompose_operator_to_product(pstring, generators)
+        self.assertEqual(target_generators, pstring_generators)
 
+
+class TestLogicalDecompose(unittest.TestCase):
+
+    def test_repetition_code(self):
+        stabilizers = [
+            stim.PauliString("ZZI"),
+            stim.PauliString("ZIZ")
+        ]
+        logical_op_dict = [
+            (stim.PauliString("X"), stim.PauliString("XXX")),
+            (stim.PauliString("Z"), stim.PauliString("ZII"))
+        ]
+        pstring = stim.PauliString("XYY")
+        target_pstring = stim.PauliString("-X")
+        actual_pstring = decompose_pauli_to_logical_operators(pstring, logical_op_dict, stabilizers)
+        self.assertEqual(target_pstring, actual_pstring)
+
+    def test_repetition_code_y(self):
+        stabilizers = [
+            stim.PauliString("ZZI"),
+            stim.PauliString("ZIZ")
+        ]
+        logical_op_dict = [
+            (stim.PauliString("X"), stim.PauliString("XXX")),
+            (stim.PauliString("Z"), stim.PauliString("ZII"))
+        ]
+        pstring = stim.PauliString("YXX")
+        target_pstring = stim.PauliString("Y")
+        actual_pstring = decompose_pauli_to_logical_operators(pstring, logical_op_dict, stabilizers)
+        self.assertEqual(target_pstring, actual_pstring)
+
+    def test_repetition_code_y_bar_ziz(self):
+        stabilizers = [
+            stim.PauliString("ZZI"),
+            stim.PauliString("ZIZ")
+        ]
+        logical_op_dict = [
+            (stim.PauliString("X"), stim.PauliString("XXX")),
+            (stim.PauliString("Z"), stim.PauliString("ZII"))
+        ]
+        pstring = stim.PauliString("-XXY")
+        target_pstring = stim.PauliString("-Y")
+        actual_pstring = decompose_pauli_to_logical_operators(pstring, logical_op_dict, stabilizers)
+        self.assertEqual(target_pstring, actual_pstring)
 
 if __name__ == "__main__":
     unittest.main()
