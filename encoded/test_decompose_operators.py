@@ -47,7 +47,6 @@ class TestBacksub(unittest.TestCase):
         A = np.eye(3).astype(bool)
         b = np.array([True, False, False])
         x = _boolean_backsub_solve(A, b)
-        print(x)
         self.assertTrue(np.allclose(x, b))
     
     def test_one_above_diagonal(self):
@@ -113,6 +112,19 @@ class TestDecompose(unittest.TestCase):
         pstring_generators = decompose_operator_to_product(pstring, generators)
         target_generators = [stim.PauliString("X"), stim.PauliString("Z")]
         self.assertEqual(target_generators, pstring_generators)
+
+    def test_xi_zi_ix_iz(self):
+        generators = [
+            stim.PauliString("XI"),
+            stim.PauliString("ZI"),
+            stim.PauliString("IX"),
+            stim.PauliString("IZ")
+        ]
+        pstring = stim.PauliString("IY")
+        pstring_generators = decompose_operator_to_product(pstring, generators)
+        target_generators = [stim.PauliString("IX"), stim.PauliString("IZ")]
+        self.assertEqual(target_generators, pstring_generators)
+
 
 
 if __name__ == "__main__":

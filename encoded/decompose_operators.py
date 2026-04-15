@@ -14,7 +14,7 @@ def _swap_row(arr: np.ndarray, i: int, j: int):
 def _swap_elems(b: np.ndarray, i, j):
     b_copy = b.copy()
     temp = b[i]
-    b_copy[j] = b[i]
+    b_copy[i] = b[j]
     b_copy[j] = temp
     return b_copy
 
@@ -38,8 +38,8 @@ def _boolean_rref(A: np.ndarray, b: np.ndarray) -> np.ndarray:
         # Eliminate all other rows i where A[i, j] = 1.
         for i in range(j+1, A.shape[0]):
             if A_copy[i, j]:
-                A_copy[i, :] = A_copy[i, :] ^ A_copy[idx_first_one, :]
-                b_copy[i] = b[i] ^ b_copy[idx_first_one]
+                A_copy[i, :] = A_copy[i, :] ^ A_copy[j, :]
+                b_copy[i] = b[i] ^ b_copy[j]
     return A_copy, b_copy
 
 
