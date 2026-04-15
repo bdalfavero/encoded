@@ -1,6 +1,10 @@
 import unittest
 import numpy as np
-from encoded.decompose_operators import _boolean_rref, _boolean_backsub_solve, solve_boolean_system
+import stim
+from encoded.decompose_operators import (
+    _boolean_rref, _boolean_backsub_solve, solve_boolean_system,
+    decompose_operator_to_product
+)
 
 class TestRREF(unittest.TestCase):
 
@@ -75,6 +79,41 @@ class TestLinearSolve(unittest.TestCase):
         x_target = np.array([True, True, False])
         x = solve_boolean_system(A, b)
         self.assertTrue(np.allclose(x, x_target))
+
+
+class TestDecompose(unittest.TestCase):
+
+    def test_zzi_izz_ziz(self):
+        generators = [
+            stim.PauliString("ZZI"),
+            stim.PauliString("IZZ"),
+            stim.PauliString("ZIZ")
+        ]
+        pstring = stim.PauliString("ZZI")
+        pstring_generators = decompose_operator_to_product(pstring, generators)
+        target_generators = [stim.PauliString("ZZI")]
+        self.assertEqual(target_generators, pstring_generators)
+    
+    def test_xi_ix(self):
+        generators = [
+            stim.PauliString("XI"),
+            stim.PauliString("IX")
+        ]
+        pstring = stim.PauliString("XX")
+        pstring_generators = decompose_operator_to_product(pstring, generators)
+        target_generators = [stim.PauliString("XI"), stim.PauliString("IX")]
+        self.assertEqual(target_generators, pstring_generators)
+
+    def test_x_z(self):
+        generators = [
+            stim.PauliString("X"),
+            stim.PauliString("Z")
+        ]
+        pstring = stim.PauliString("Y")
+        pstring_generators = decompose_operator_to_product(pstring, generators)
+        target_generators = [stim.PauliString("X"), stim.PauliString("Z")]
+        self.assertEqual(target_generators, pstring_generators)
+
 
 if __name__ == "__main__":
     unittest.main()

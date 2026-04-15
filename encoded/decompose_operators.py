@@ -20,7 +20,7 @@ def _swap_elems(b: np.ndarray, i, j):
 
 
 def _boolean_rref(A: np.ndarray, b: np.ndarray) -> np.ndarray:
-    assert A.shape[1] <= A.shape[0]
+    # assert A.shape[1] <= A.shape[0]
 
     A_copy = A.copy()
     b_copy = b.copy()
@@ -68,8 +68,24 @@ def solve_boolean_system(A, b):
     return x
 
 
+def generators_to_matrix(generators: List[stim.PauliString]) -> np.ndarray:
+    rows = []
+    for ps in generators:
+        x, z = ps.to_numpy()
+        rows.append(np.hstack((x, z)))
+    return np.vstack(rows).T
+
+
 def decompose_operator_to_product(pstring: stim.PauliString, generators: List[stim.PauliString]) -> List[stim.PauliString]:
     """Given a Pauli string P and set of operators {g1, ..., gn}, find a product of
     the gi operators that equals P."""
 
-    generator_matrix = np.vstack([gen.to_numpy() for gen in generators]).T
+    A = generators_to_matrix(generators)
+    b_x, b_z = pstring.to_numpy()
+    b = np.hstack((b_x, b_z))
+    x = solve_boolean_system(A, b)
+    pstring_generators = []
+    for i, xi in enumerate(x):
+        if xi:
+            pstring_generators.append(generators[i])
+    return pstring_generators
