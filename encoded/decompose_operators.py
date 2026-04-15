@@ -40,7 +40,7 @@ def _boolean_rref(A: np.ndarray, b: np.ndarray) -> np.ndarray:
         for i in range(j+1, A.shape[0]):
             if A_copy[i, j]:
                 A_copy[i, :] = A_copy[i, :] ^ A_copy[j, :]
-                b_copy[i] = b[i] ^ b_copy[j]
+                b_copy[i] = b_copy[i] ^ b_copy[j]
     return A_copy, b_copy
 
 
@@ -57,7 +57,7 @@ def _boolean_backsub_solve(A_rref: np.ndarray, b_rref: np.ndarray) -> np.ndarray
     for i in range(first_i - 1, -1, -1):
         x_i = False
         for j in range(i+1, first_i):
-            x_i ^= A_rref[j, i] and x[j]
+            x_i ^= A_rref[i, j] and x[j]
         x_i ^= b_rref[i]
         x[i] = x_i
     return x
@@ -65,10 +65,7 @@ def _boolean_backsub_solve(A_rref: np.ndarray, b_rref: np.ndarray) -> np.ndarray
 
 def solve_boolean_system(A, b):
     A_rref, b_rref = _boolean_rref(A, b)
-    print("A_rref=\n", A_rref)
-    print("b_rref=\n", b_rref)
     x = _boolean_backsub_solve(A_rref, b_rref)
-    print("x=\n", x)
     return x
 
 
