@@ -58,6 +58,8 @@ print("Logical eigenvalues")
 logical_ham_matrix = logical_hamiltonian.matrix(logical_qs)
 logical_eigvals, logical_eigvecs = eigh(logical_ham_matrix)
 print(logical_eigvals)
+for i, energy in enumerate(logical_eigvals):
+    print(energy, logical_eigvecs[:, i])
 
 fig, ax = plt.subplots()
 ax.hlines(phys_eigvals, 1., 2., colors=["blue"], label="Physical")
