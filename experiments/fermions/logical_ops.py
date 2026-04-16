@@ -1,9 +1,13 @@
+import pickle
 from scipy.linalg import eigh
 import matplotlib.pyplot as plt
 import stim
 import cirq
 import openfermion as of
-from encoded.utils import get_observables, stim_pauli_string_to_cirq, cirq_pauli_string_to_stim
+from encoded.utils import (
+    get_observables, stim_pauli_string_to_cirq, 
+    cirq_pauli_string_to_stim, cirq_pauli_sum_to_openfermion_qubop
+)
 from encoded.decompose_operators import decompose_pauli_to_logical_operators
 
 generators = [
@@ -61,10 +65,15 @@ print(logical_eigvals)
 for i, energy in enumerate(logical_eigvals):
     print(energy, logical_eigvecs[:, i])
 
-fig, ax = plt.subplots()
-ax.hlines(phys_eigvals, 1., 2., colors=["blue"], label="Physical")
-ax.hlines(logical_eigvals, 3., 4., colors=["tab:orange"], label="Logical")
-ax.set_ylabel("Energy")
-ax.set_xticks([])
-ax.legend(loc="center right")
-plt.show()
+# fig, ax = plt.subplots()
+# ax.hlines(phys_eigvals, 1., 2., colors=["blue"], label="Physical")
+# ax.hlines(logical_eigvals, 3., 4., colors=["tab:orange"], label="Logical")
+# ax.set_ylabel("Energy")
+# ax.set_xticks([])
+# ax.legend(loc="center right")
+# plt.show()
+
+ham_of = cirq_pauli_sum_to_openfermion_qubop(logical_hamiltonian)
+
+with open("four_qubit_logical_hamiltonian.pkl", "wb") as f:
+    pickle.dump(ham_of, f)

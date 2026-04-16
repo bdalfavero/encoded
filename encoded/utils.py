@@ -2,6 +2,7 @@ from typing import List, Optional, Dict
 from functools import reduce
 import stim
 import cirq
+import openfermion as of
 
 def stim_pauli_string_to_cirq(stim_pauli: stim.PauliString) -> cirq.PauliString:
     """Convert a stim PauliString to a cirq PauliString."""
@@ -71,3 +72,25 @@ def get_observables(
         observables.append((x, z))
 
     return observables
+
+
+def to_groups_of(groups: List[List[cirq.PauliString]]) -> List[of.QubitOperator]:
+    """Convert groups from List[List[cirq.PauliString]] to List[of.QubitOperator]."""
+    maps = {cirq.X: "X", cirq.Y: "Y", cirq.Z: "Z"}
+
+    groups_of: List[of.QubitOperator] = []
+    for group in groups:
+        group_of = of.QubitOperator()
+
+        for p in group:
+            group_of += of.QubitOperator(" ".join([f"{maps[v]}{k.x}" for k, v in p._qubit_pauli_map.items()]), coefficient=p.coefficient)
+        groups_of.append(group_of)
+
+    return groups_of
+
+
+def cirq_pauli_sum_to_openfermion_qubop(psum: cirq.PauliSum) -> of.QubitOperator:
+    groups = [[ps for ps in psum]]
+    qubop_list = to_groups_of(groups)
+    assert len(qubop_list) == 1
+    return qubop_list[0]
