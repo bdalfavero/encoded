@@ -39,6 +39,23 @@ class TestRREF(unittest.TestCase):
             [False, False, False]
         ])
         self.assertTrue(np.allclose(A_rref, A_target))
+    
+    def test_third_row_linearly_dependent(self):
+        A = np.array([
+            [True, False, True, False],
+            [False, True, True, False],
+            [True, False, True, False],
+            [False, False, False, True]
+        ])
+        A_target = ([
+            [True, False, True, False],
+            [False, True, True, False],
+            [False, False, False, True],
+            [False, False, False, False]
+        ])
+        b = np.zeros(4).astype(bool)
+        A_rref, _ = _boolean_rref(A, b)
+        self.assertTrue(np.allclose(A_rref, A_target))
 
 
 class TestBacksub(unittest.TestCase):
