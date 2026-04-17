@@ -39,9 +39,13 @@ class TestAddStabilizer(unittest.TestCase):
         errs = [
             stim.PauliString("ZII")
         ]
-        new_stabilizer = add_stabilizer(stabilizers, errs, extra_support=stim.PauliString("X"))
-        target_stabilizer = stim.PauliString("XXXX")
-        self.assertEqual(new_stabilizer, target_stabilizer)
+        new_stabilizers = add_stabilizer(stabilizers, errs, extra_support=stim.PauliString("X"))
+        target_stabilizers = [
+            stim.PauliString("ZZII"),
+            stim.PauliString("IZZI"),
+            stim.PauliString("XXXX")
+        ]
+        self.assertEqual(new_stabilizers, target_stabilizers)
 
 if __name__ == "__main__":
     unittest.main()

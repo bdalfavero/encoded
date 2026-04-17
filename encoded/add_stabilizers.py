@@ -1,4 +1,5 @@
 from typing import List, Tuple, Optional
+from copy import deepcopy
 import numpy as np
 import stim
 from encoded.decompose_operators import generators_to_matrix
@@ -27,7 +28,9 @@ def _form_linear_system(generators: List[stim.PauliString], errors: List[stim.Pa
     return A, b
 
 
-def add_stabilizer(generators: List[stim.PauliString], errors: List[stim.PauliString], extra_support: Optional[stim.PauliString]=None) -> stim.PauliString:
+def add_stabilizer(
+    generators: List[stim.PauliString], errors: List[stim.PauliString], extra_support: Optional[stim.PauliString]=None
+) -> List[stim.PauliString]:
     A, b = _form_linear_system(generators, errors)
     x = solve_boolean_system(A, b)
     xs = x[:x.size // 2]
@@ -35,4 +38,10 @@ def add_stabilizer(generators: List[stim.PauliString], errors: List[stim.PauliSt
     new_generator = stim.PauliString.from_numpy(xs=xs, zs=zs)
     if extra_support is not None:
         new_generator += extra_support
-    return new_generator
+        # Add identity to all the original generators.
+        id_extra = stim.PauliString("I" * len(extra_support))
+        old_generators = [gen + id_extra for gen in generators]
+    else:
+        old_generators = deepcopy(generators)
+    new_generators = old_generators + [new_generator]
+    return new_generators
