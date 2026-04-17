@@ -47,5 +47,22 @@ class TestAddStabilizer(unittest.TestCase):
         ]
         self.assertEqual(new_stabilizers, target_stabilizers)
 
+    def test_zzi_e_iix(self):
+        """Test the case where the existing generators are ZZI and IZZ,
+        and we want the new stabilizer to anticommte with ZII."""
+
+        stabilizers = [
+            stim.PauliString("ZZI"),
+        ]
+        errs = [
+            stim.PauliString("IIX")
+        ]
+        new_stabilizers = add_stabilizer(stabilizers, errs, verbose=True)
+        target_stabilizers = [
+            stim.PauliString("ZZI"),
+            stim.PauliString("IZZ"),
+        ]
+        self.assertEqual(new_stabilizers, target_stabilizers)
+
 if __name__ == "__main__":
     unittest.main()

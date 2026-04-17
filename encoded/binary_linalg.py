@@ -63,7 +63,10 @@ def _boolean_backsub_solve(A_rref: np.ndarray, b_rref: np.ndarray) -> np.ndarray
     return x
 
 
-def solve_boolean_system(A, b):
+def solve_boolean_system(A, b, verbose: bool=False):
     A_rref, b_rref = _boolean_rref(A, b)
+    if verbose:
+        print("A_rref=\n", A_rref)
+        print("b_rref=\n", b_rref)
     x = _boolean_backsub_solve(A_rref, b_rref)
     return x

@@ -29,10 +29,11 @@ def _form_linear_system(generators: List[stim.PauliString], errors: List[stim.Pa
 
 
 def add_stabilizer(
-    generators: List[stim.PauliString], errors: List[stim.PauliString], extra_support: Optional[stim.PauliString]=None
+    generators: List[stim.PauliString], errors: List[stim.PauliString], extra_support: Optional[stim.PauliString]=None,
+    verbose: bool=False
 ) -> List[stim.PauliString]:
     A, b = _form_linear_system(generators, errors)
-    x = solve_boolean_system(A, b)
+    x = solve_boolean_system(A, b, verbose=verbose)
     xs = x[:x.size // 2]
     zs = x[(x.size // 2):]
     new_generator = stim.PauliString.from_numpy(xs=xs, zs=zs)
