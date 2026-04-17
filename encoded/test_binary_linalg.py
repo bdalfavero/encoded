@@ -56,6 +56,21 @@ class TestRREF(unittest.TestCase):
         b = np.zeros(4).astype(bool)
         A_rref, _ = _boolean_rref(A, b)
         self.assertTrue(np.allclose(A_rref, A_target))
+    
+    def test_zzi_izz_e_zii(self):
+        A = np.array([
+            [True, True, False, False, False, False],
+            [False, True, True, False, False, False],
+            [True, False, False, False, False, False]
+        ])
+        b = np.zeros(3).astype(bool)
+        A_rref, _ = _boolean_rref(A, b)
+        A_target = np.array([
+            [True, True, False, False, False, False],
+            [False, True, True, False, False, False],
+            [False, False, True, False, False, False]
+        ])
+        self.assertTrue(np.allclose(A_rref, A_target))
 
 
 class TestBacksub(unittest.TestCase):

@@ -22,7 +22,8 @@ def _boolean_rref(A: np.ndarray, b: np.ndarray) -> np.ndarray:
     A_copy = A.copy()
     b_copy = b.copy()
 
-    for j in range(A.shape[1]):
+    max_j = min(A_copy.shape[0], A_copy.shape[1])
+    for j in range(max_j):
         # Find the first index i s.t. A[i, j] = 1.
         found = False
         for idx_first_one in range(j, A_copy.shape[0]):
