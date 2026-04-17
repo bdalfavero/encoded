@@ -91,6 +91,19 @@ class TestBacksub(unittest.TestCase):
         x_target = np.array([True, False])
         self.assertTrue(np.allclose(x, x_target))
 
+    def test_zzi_izz_e_zii(self):
+        """This tests an under-determined system."""
+
+        A_rref = np.array([
+            [True, True, False, False, False, False],
+            [False, True, True, False, False, False],
+            [False, False, True, False, False, False]
+        ])
+        b_rref = np.array([False, False, True])
+        x_target = np.array([True, True, True, False, False, False])
+        x = _boolean_backsub_solve(A_rref, b_rref)
+        self.assertTrue(np.allclose(x, x_target))
+
 
 class TestLinearSolve(unittest.TestCase):
 

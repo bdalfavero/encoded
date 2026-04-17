@@ -46,6 +46,9 @@ def _boolean_backsub_solve(A_rref: np.ndarray, b_rref: np.ndarray) -> np.ndarray
     # Find the first value of i s.t. A[i, i] != 1.
     found = False
     for first_i in range(A_rref.shape[1]):
+        if first_i >= min(A_rref.shape):
+            first_i -= 1
+            break
         if not A_rref[first_i, first_i]:
             found = True
             break
