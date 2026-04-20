@@ -174,4 +174,5 @@ def enumerate_all_solutions(A: np.ndarray, b: np.ndarray) -> List[np.ndarray]:
         for bitstr in _enumerate_bitstrings(len(free_columns)):
             known_values = dict(zip(free_columns, bitstr))
             x = solve_with_known_values(A, b, known_values)
+            solutions.append(x)
     return solutions

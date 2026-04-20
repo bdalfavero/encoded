@@ -349,8 +349,8 @@ class TestAllSolutions(unittest.TestCase):
         ])
         b = np.array([True, False])
         target_solutions = [
-            np.array([True, False, True]),
-            np.array([False, True, True]),
+            np.array([True, False, False]),
+            np.array([False, True, False]),
         ]
         solutions = enumerate_all_solutions(A, b)
         all_tests = []
