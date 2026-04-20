@@ -5,7 +5,8 @@ from encoded.binary_linalg import (
     _boolean_rref, _boolean_backsub_solve,
     solve_boolean_system, _pivot_columns,
     _pivot_locations, _single_row_backsub,
-    solve_with_known_values
+    _enumerate_bitstrings,
+    solve_with_known_values, enumerate_all_solutions
 )
 
 class TestRREF(unittest.TestCase):
@@ -332,6 +333,70 @@ class SolveKnown(unittest.TestCase):
         x = solve_with_known_values(A, b, known)
         x_target = np.array([True, False])
         self.assertTrue(np.allclose(x, x_target))
+
+class TestAllSolutions(unittest.TestCase):
+
+    def test_eye(self):
+        A = np.eye(3)
+        b = np.array([True, True, False])
+        solutions = enumerate_all_solutions(A, b)
+        self.assertTrue(len(solutions) == 1 and np.allclose(b, solutions[0]))
+
+    def test_middle_column_free(self):
+        A = np.array([
+            [True, True, False],
+            [False, False, True],
+        ])
+        b = np.array([True, False])
+        target_solutions = [
+            np.array([True, False, True]),
+            np.array([False, True, True]),
+        ]
+        solutions = enumerate_all_solutions(A, b)
+        all_tests = []
+        for s1, s2 in zip(target_solutions, solutions):
+            all_tests.append(np.allclose(s1, s2))
+        self.assertTrue(all(all_tests))
+
+    def test_two_free_variables(self):
+        A = np.array([
+            [True, False, False, True],
+            [False, True, True, False],
+            [False, False, False, False]
+        ])
+        b = np.array([True, False, False])
+        target_solutions = [
+            np.array([True, False, False, False]),
+            np.array([False, False, False, True]),
+            np.array([True, True, True, False]),
+            np.array([False, True, True, True])
+        ]
+        solutions = enumerate_all_solutions(A, b)
+        all_tests = []
+        for s1, s2 in zip(target_solutions, solutions):
+            all_tests.append(np.allclose(s1, s2))
+        self.assertTrue(all(all_tests))
+
+
+class TestEnumerateBitstrings(unittest.TestCase):
+
+    def test_one_bit(self):
+        bitstrings = _enumerate_bitstrings(1)
+        targets = [np.array([False]), np.array(True)]
+        self.assertEqual(targets, bitstrings)
+
+    def test_two_bits(self):
+        bitstrings = _enumerate_bitstrings(2)
+        targets = [
+            np.array([False, False]),
+            np.array([False, True]),
+            np.array([True, False]),
+            np.array([True, True])
+        ]
+        all_equal = []
+        for b1, b2 in zip(bitstrings, targets):
+            all_equal.append(np.allclose(b1, b2))
+        self.assertTrue(all(all_equal))
 
 if __name__ == "__main__":
     unittest.main()

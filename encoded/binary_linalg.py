@@ -111,8 +111,10 @@ def solve_boolean_system(A, b, verbose: bool=False):
 def _enumerate_bitstrings(n: int) -> List[np.ndarray]:
     """Enumerate all bitstrings with n bits in the form of numpy arrays"""
 
-    binary_lists = [it.product([False, True], repeat=n)]
-    bstrings = [np.ndarray(lst) for lst in binary_lists]
+    binary_lists = it.product([False, True], repeat=n)
+    bstrings = []
+    for bs in binary_lists:
+        bstrings.append(np.array(list(bs)))
     return bstrings
 
 
@@ -157,6 +159,19 @@ def solve_with_known_values(A: np.ndarray, b: np.ndarray, known_values: Dict[int
 
 
 def enumerate_all_solutions(A: np.ndarray, b: np.ndarray) -> List[np.ndarray]:
-    """Enumerate all solutions to a system of binary equations."""
+    """Enumerate all solutions to a system of binary equations. A must be in
+    reduced row echelon form."""
 
-    pass
+    # Check that all of the free variables are known.
+    pivots = _pivot_locations(A)
+    pivot_columns = [t[1] for t in pivots]
+    free_columns = sorted(list(set(range(A.shape[1])) - set(pivot_columns)))
+
+    solutions = []
+    if len(free_columns) == 0:
+        solutions.append(solve_with_known_values(A, b, {}))
+    else:
+        for bitstr in _enumerate_bitstrings(len(free_columns)):
+            known_values = dict(zip(free_columns, bitstr))
+            x = solve_with_known_values(A, b, known_values)
+    return solutions
