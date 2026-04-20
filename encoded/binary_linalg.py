@@ -1,4 +1,6 @@
-from typing import List
+from typing import List, Dict, Tuple
+import itertools as it
+from copy import deepcopy
 import numpy as np
 
 def _swap_row(arr: np.ndarray, i: int, j: int):
@@ -80,6 +82,22 @@ def _pivot_columns(A: np.ndarray) -> List[int]:
     return pivot_columns
 
 
+def _pivot_locations(A: np.ndarray) -> List[Tuple[int, int]]:
+    """Find the pivot columns of the binary matrix A in RREF."""
+
+    i = 0 # Index of row where the pivot is.
+    j = 0 # Index of column we are currently searching.
+    pivots = []
+    while i < A.shape[0]:
+        if A[i, j]:
+            pivots.append((i, j))
+            i += 1
+        j += 1
+        if j >= A.shape[1]:
+            break
+    return pivots
+
+
 def solve_boolean_system(A, b, verbose: bool=False):
     A_rref, b_rref = _boolean_rref(A, b)
     if verbose:
@@ -87,3 +105,58 @@ def solve_boolean_system(A, b, verbose: bool=False):
         print("b_rref=\n", b_rref)
     x = _boolean_backsub_solve(A_rref, b_rref)
     return x
+
+
+# TODO This should be a generator.
+def _enumerate_bitstrings(n: int) -> List[np.ndarray]:
+    """Enumerate all bitstrings with n bits in the form of numpy arrays"""
+
+    binary_lists = [it.product([False, True], repeat=n)]
+    bstrings = [np.ndarray(lst) for lst in binary_lists]
+    return bstrings
+
+
+def _single_row_backsub(row: np.ndarray, i: int, known_values: Dict[int, bool], rhs: bool) -> bool:
+    """Solve for the value in column i for this row during backsubstitution.
+    The values we have already solved for are encoded in known_values.
+    
+    Arguments:
+    row - The row of the matrix we are currenty solving.
+    i - The index of the pivot column. This should be True in the row that is passed.
+    known_values - Values we have previously solved for, or free variables.
+    rhs - The value of the right hand side for the current row."""
+
+    assert row[i], f"Column i has value: {row[i]}, should be True."
+    
+    known_true_sum = False # sum of values that are known and have True for their column in the row.
+    for j in range(i+1, row.size):
+        if row[j] and j not in known_values.keys():
+            raise ValueError(f"Column {j} > pivot column {i} is True, but a known value is not given.")
+        if row[j]:
+            known_true_sum ^= known_values[j]
+    return rhs ^ known_true_sum
+
+
+def solve_with_known_values(A: np.ndarray, b: np.ndarray, known_values: Dict[int, bool]) -> np.ndarray:
+    """Given A and b in RREF and values for the free variables, solve the solution vector x."""
+
+    # Check that all of the free variables are known.
+    pivots = _pivot_locations(A)
+    pivot_columns = [t[1] for t in pivots]
+    free_columns = set(range(A.shape[1])) - set(pivot_columns)
+    assert free_columns.issubset(set(known_values.keys()))
+
+    # Sort the pivots from greatest to least by their column index.
+    sorted_pivots = reversed(sorted(pivots, key=lambda t: t[1]))
+    # Do the backsubstitution starting from the pivot that is furthest down.
+    known_copy = deepcopy(known_values)
+    for i, j in sorted_pivots:
+        x_j = _single_row_backsub(A[i, :], j, known_copy, b[i])
+        known_copy[j] = x_j
+    return np.array([known_copy[i] for i in range(A.shape[1])])
+
+
+def enumerate_all_solutions(A: np.ndarray, b: np.ndarray) -> List[np.ndarray]:
+    """Enumerate all solutions to a system of binary equations."""
+
+    pass

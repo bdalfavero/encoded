@@ -3,7 +3,9 @@ import numpy as np
 import stim
 from encoded.binary_linalg import (
     _boolean_rref, _boolean_backsub_solve,
-    solve_boolean_system, _pivot_columns
+    solve_boolean_system, _pivot_columns,
+    _pivot_locations, _single_row_backsub,
+    solve_with_known_values
 )
 
 class TestRREF(unittest.TestCase):
@@ -165,6 +167,171 @@ class TestPivotColumns(unittest.TestCase):
         pivot_columns = _pivot_columns(A)
         target_columns = [0, 1]
         self.assertEqual(set(pivot_columns), set(target_columns))
+
+
+class TestPivots(unittest.TestCase):
+
+    def test_id_matrix(self):
+        eye = np.eye(4).astype(bool)
+        pivots = _pivot_locations(eye)
+        target_pivots = [(i, i) for i in range(4)]
+        self.assertEqual(set(pivots), set(target_pivots))
+    
+    def test_free_variables(self):
+        """This system has one free variable because there is a column at the
+        end that is not a pivot."""
+
+        A = np.array([
+            [True, False, True, False],
+            [False, True, True, True],
+            [False, False, True, False]
+        ])
+        pivots = _pivot_locations(A)
+        target_pivots = [(0, 0), (1, 1), (2, 2)]
+        self.assertEqual(set(pivots), set(target_pivots))
+    
+    def test_delayed_pivot(self):
+        """Sometimes, the pivot columns don't come one after another."""
+
+        A = np.array([
+            [True, True, True],
+            [False, False, True],
+            [False, False, False]
+        ])
+        pivots = _pivot_locations(A)
+        target_pivots = [(0, 0), (1, 2)]
+        self.assertEqual(set(pivots), set(target_pivots))
+    
+    def test_tall_matrix(self):
+        A = np.zeros((4, 2)).astype(bool)
+        A[0, 0] = True
+        A[1, 1] = True
+        pivots = _pivot_locations(A)
+        target_pivots = [(0, 0), (1, 1)]
+        self.assertEqual(set(pivots), set(target_pivots))
+
+
+class TestSingleRow(unittest.TestCase):
+
+    def test_no_known_rhs_false(self):
+        i = 3
+        row = np.zeros(5).astype(bool)
+        row[i] = True
+        known = {}
+        rhs = False
+        x_i = _single_row_backsub(row, i, known, rhs)
+        self.assertTrue(not x_i)
+
+    def test_no_known_rhs_true(self):
+        i = 3
+        row = np.zeros(5).astype(bool)
+        row[i] = True
+        known = {}
+        rhs = True
+        x_i = _single_row_backsub(row, i, known, rhs)
+        self.assertTrue(x_i)
+    
+    def test_one_known(self):
+        row = np.zeros(5).astype(bool)
+        i = 1
+        row[i] = True
+        known = {3: True}
+        for k in known.keys():
+            row[k] = True
+        rhs = False
+        x_i = _single_row_backsub(row, i, known, rhs)
+        self.assertTrue(x_i)
+
+    def test_two_known(self):
+        row = np.zeros(5).astype(bool)
+        i = 0
+        row[i] = True
+        known = {3: True, 4: True}
+        for k in known.keys():
+            row[k] = True
+        rhs = False
+        x_i = _single_row_backsub(row, i, known, rhs)
+        self.assertTrue(not x_i)
+
+    def test_two_known_plus_extra(self):
+        """In this case we have a known value that has False in this row."""
+
+        row = np.zeros(5).astype(bool)
+        i = 0
+        row[i] = True
+        known = {1: False, 3: True, 4: False}
+        for k in known.keys():
+            if k != 1:
+                row[k] = True
+        rhs = False
+        x_i = _single_row_backsub(row, i, known, rhs)
+        self.assertTrue(x_i)
+
+
+class SolveKnown(unittest.TestCase):
+
+    def test_eye_one_unknown(self):
+        A = np.eye(5).astype(bool)
+        b = np.array([True, False, True, False, True])
+        known = {
+            1: False,
+            2: True,
+            3: False,
+            4: True
+        }
+        x = solve_with_known_values(A, b, known)
+        self.assertTrue(np.allclose(x, b))
+
+    def test_eye_two_unknowns(self):
+        A = np.eye(5).astype(bool)
+        b = np.array([True, False, True, False, True])
+        known = {
+            1: False,
+            2: True,
+            3: False
+        }
+        x = solve_with_known_values(A, b, known)
+        self.assertTrue(np.allclose(x, b))
+
+    def test_last_variable_free(self):
+        A = np.array([
+            [True, False, True],
+            [False, True, True],
+            [False, False, False]
+        ])
+        b = np.array([True, True, True])
+        known = {
+            2: True
+        }
+        x = solve_with_known_values(A, b, known)
+        x_target = np.array([False, False, True])
+        self.assertTrue(np.allclose(x, x_target))
+
+    def test_middle_column_free(self):
+        A = np.array([
+            [True, True, False],
+            [False, False, True],
+        ])
+        b = np.array([True, False])
+        known = {
+            1: False
+        }
+        x = solve_with_known_values(A, b, known)
+        x_target = np.array([True, False, False])
+        self.assertTrue(np.allclose(x, x_target))
+
+    def test_tall_system(self):
+        A = np.zeros((5, 2)).astype(bool)
+        A[0, 0] = True
+        A[0, 1] = True
+        A[1, 1] = True
+        b = np.array([True, False, True, False, False])
+        known = {
+            2: True, 3: False, 4: False
+        }
+        x = solve_with_known_values(A, b, known)
+        x_target = np.array([True, False])
+        self.assertTrue(np.allclose(x, x_target))
 
 if __name__ == "__main__":
     unittest.main()
