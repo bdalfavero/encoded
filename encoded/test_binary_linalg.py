@@ -3,7 +3,7 @@ import numpy as np
 import stim
 from encoded.binary_linalg import (
     _boolean_rref, _boolean_backsub_solve,
-    solve_boolean_system
+    solve_boolean_system, _pivot_columns
 )
 
 class TestRREF(unittest.TestCase):
@@ -123,6 +123,40 @@ class TestLinearSolve(unittest.TestCase):
         x_target = np.array([True, True, False])
         x = solve_boolean_system(A, b)
         self.assertTrue(np.allclose(x, x_target))
+
+
+class TestPivotColumns(unittest.TestCase):
+
+    def test_id_matrix(self):
+        eye = np.eye(4).astype(bool)
+        pivot_columns = _pivot_columns(eye)
+        target_columns = list(range(4))
+        self.assertEqual(set(pivot_columns), set(target_columns))
+    
+    def test_free_variables(self):
+        """This system has one free variable because there is a column at the
+        end that is not a pivot."""
+
+        A = np.array([
+            [True, False, True, False],
+            [False, True, True, True],
+            [False, False, True, False]
+        ])
+        pivot_columns = _pivot_columns(A)
+        target_columns = [0, 1, 2]
+        self.assertEqual(set(pivot_columns), set(target_columns))
+    
+    def test_delayed_pivot(self):
+        """Sometimes, the pivot columns don't come one after another."""
+
+        A = np.array([
+            [True, True, True],
+            [False, False, True],
+            [False, False, False]
+        ])
+        pivot_columns = _pivot_columns(A)
+        target_columns = [0, 2]
+        self.assertEqual(set(pivot_columns), set(target_columns))
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,3 +1,4 @@
+from typing import List
 import numpy as np
 
 def _swap_row(arr: np.ndarray, i: int, j: int):
@@ -61,6 +62,22 @@ def _boolean_backsub_solve(A_rref: np.ndarray, b_rref: np.ndarray) -> np.ndarray
         x_i ^= b_rref[i]
         x[i] = x_i
     return x
+
+
+def _pivot_columns(A: np.ndarray) -> List[int]:
+    """Find the pivot columns of the binary matrix A in RREF."""
+
+    i = 0 # Index of row where the pivot is.
+    j = 0 # Index of column we are currently searching.
+    pivot_columns = []
+    while i < A.shape[0]:
+        if A[i, j]:
+            i += 1
+            pivot_columns.append(j)
+        j += 1
+        if j >= A.shape[1]:
+            break
+    return pivot_columns
 
 
 def solve_boolean_system(A, b, verbose: bool=False):
