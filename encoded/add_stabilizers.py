@@ -3,7 +3,7 @@ from copy import deepcopy
 import numpy as np
 import stim
 from encoded.decompose_operators import generators_to_matrix
-from encoded.binary_linalg import solve_boolean_system
+from encoded.binary_linalg import solve_boolean_system, _boolean_rref, enumerate_all_solutions
 
 def metric_tensor(nq: int) -> np.ndarray:
     id_nq = np.eye(nq).astype(bool)
@@ -33,10 +33,21 @@ def add_stabilizer(
     verbose: bool=False
 ) -> List[stim.PauliString]:
     A, b = _form_linear_system(generators, errors)
-    x = solve_boolean_system(A, b, verbose=verbose)
-    xs = x[:x.size // 2]
-    zs = x[(x.size // 2):]
-    new_generator = stim.PauliString.from_numpy(xs=xs, zs=zs)
+    if verbose:
+        print("A=\n", A)
+        print("b=\n", b)
+    A_rref, b_rref = _boolean_rref(A, b)
+    if verbose:
+        print("A_rref=\n", A_rref)
+        print("b_rref=\n", b_rref)
+    solutions = enumerate_all_solutions(A_rref, b_rref)
+    candidate_strings = []
+    for x in solutions:
+        xs = x[:x.size // 2]
+        zs = x[(x.size // 2):]
+        pstring = stim.PauliString.from_numpy(xs=xs, zs=zs)
+        candidate_strings.append(pstring)
+    new_generator = min(candidate_strings, key=lambda ps: ps.weight)
     if extra_support is not None:
         new_generator += extra_support
         # Add identity to all the original generators.
