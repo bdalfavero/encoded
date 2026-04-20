@@ -157,6 +157,14 @@ class TestPivotColumns(unittest.TestCase):
         pivot_columns = _pivot_columns(A)
         target_columns = [0, 2]
         self.assertEqual(set(pivot_columns), set(target_columns))
+    
+    def test_tall_matrix(self):
+        A = np.zeros((4, 2)).astype(bool)
+        A[0, 0] = True
+        A[1, 1] = True
+        pivot_columns = _pivot_columns(A)
+        target_columns = [0, 1]
+        self.assertEqual(set(pivot_columns), set(target_columns))
 
 if __name__ == "__main__":
     unittest.main()
