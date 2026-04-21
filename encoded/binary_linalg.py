@@ -19,30 +19,59 @@ def _swap_elems(b: np.ndarray, i, j):
     return b_copy
 
 
+# def _boolean_rref(A: np.ndarray, b: np.ndarray) -> np.ndarray:
+#     # assert A.shape[1] <= A.shape[0]
+
+#     A_copy = A.copy()
+#     b_copy = b.copy()
+
+#     max_j = min(A_copy.shape[0], A_copy.shape[1])
+#     for j in range(max_j):
+#         # Find the first index i s.t. A[i, j] = 1.
+#         found = False
+#         for idx_first_one in range(j, A_copy.shape[0]):
+#             if A_copy[idx_first_one, j]:
+#                 found = True
+#                 break
+#         # Swap that row with the j^th row.
+#         A_copy = _swap_row(A_copy, idx_first_one, j)
+#         b_copy = _swap_elems(b_copy, idx_first_one, j)
+#         # Eliminate all other rows i where A[i, j] = 1.
+#         for i in range(j+1, A.shape[0]):
+#             if A_copy[i, j]:
+#                 A_copy[i, :] = A_copy[i, :] ^ A_copy[j, :]
+#                 b_copy[i] = b_copy[i] ^ b_copy[j]
+#     return A_copy, b_copy
+
+
 def _boolean_rref(A: np.ndarray, b: np.ndarray) -> np.ndarray:
     # assert A.shape[1] <= A.shape[0]
 
     A_copy = A.copy()
     b_copy = b.copy()
 
-    max_j = min(A_copy.shape[0], A_copy.shape[1])
-    for j in range(max_j):
+    i = 0 # Row at which to make a pivot.
+    for j in range(A.shape[1]):
+        if np.all(np.invert(A[i:, j])):
+            continue
         # Find the first index i s.t. A[i, j] = 1.
         found = False
-        for idx_first_one in range(j, A_copy.shape[0]):
+        for idx_first_one in range(i, A_copy.shape[0]):
             if A_copy[idx_first_one, j]:
                 found = True
                 break
+        if not found:
+            continue
         # Swap that row with the j^th row.
-        A_copy = _swap_row(A_copy, idx_first_one, j)
-        b_copy = _swap_elems(b_copy, idx_first_one, j)
+        A_copy = _swap_row(A_copy, idx_first_one, i)
+        b_copy = _swap_elems(b_copy, idx_first_one, i)
         # Eliminate all other rows i where A[i, j] = 1.
-        for i in range(j+1, A.shape[0]):
-            if A_copy[i, j]:
-                A_copy[i, :] = A_copy[i, :] ^ A_copy[j, :]
-                b_copy[i] = b_copy[i] ^ b_copy[j]
+        for k in range(i+1, A.shape[0]):
+            if A_copy[k, j]:
+                A_copy[k, :] = A_copy[k, :] ^ A_copy[j, :]
+                b_copy[k] = b_copy[k] ^ b_copy[j]
+        i += 1
     return A_copy, b_copy
-
 
 def _boolean_backsub_solve(A_rref: np.ndarray, b_rref: np.ndarray) -> np.ndarray:
     x = np.zeros(A_rref.shape[1]).astype(bool)

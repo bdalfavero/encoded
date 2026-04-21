@@ -74,6 +74,22 @@ class TestRREF(unittest.TestCase):
             [False, False, True, False, False, False]
         ])
         self.assertTrue(np.allclose(A_rref, A_target))
+    
+    def test_zzi_add_stabilizer(self):
+        A = np.array([
+            [True, True, False, False, False, False],
+            [False, False, False, True, True, False],
+            [False, False, False, False, False, True]
+        ])
+        b = np.array([False, True, True])
+        A_rref_target = np.array([
+            [True, True, False, False, False, False],
+            [False, False, False, True, True, False],
+            [False, False, False, False, False, True]
+        ])
+        b_rref_target = np.array([False, True, True])
+        A_rref, b_rref = _boolean_rref(A, b)
+        self.assertTrue(np.allclose(A_rref_target, A_rref) and np.allclose(b_rref_target, b_rref))
 
 
 class TestBacksub(unittest.TestCase):
