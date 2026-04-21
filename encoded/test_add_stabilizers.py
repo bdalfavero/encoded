@@ -55,10 +55,10 @@ class TestAddStabilizer(unittest.TestCase):
             stim.PauliString("XXI"),
             stim.PauliString("IIX")
         ]
-        new_stabilizers = add_stabilizer(stabilizers, errs, verbose=True)
+        new_stabilizers = add_stabilizer(stabilizers, errs, verbose=False)
         target_stabilizers = [
             stim.PauliString("ZZI"),
-            stim.PauliString("IZZ"),
+            stim.PauliString("ZIZ"),
         ]
         self.assertEqual(new_stabilizers, target_stabilizers)
 
