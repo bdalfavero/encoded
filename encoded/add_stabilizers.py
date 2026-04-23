@@ -1,4 +1,6 @@
 from typing import List, Tuple, Optional
+import itertools
+import functools
 from copy import deepcopy
 import numpy as np
 import stim
@@ -57,3 +59,41 @@ def add_stabilizer(
         old_generators = deepcopy(generators)
     new_generators = old_generators + [new_generator]
     return new_generators
+
+
+def generate_stabilizer_elements(generators: List[stim.PauliString]) -> List[stim.PauliString]:
+    nq = max([len(ps) for ps in generators])
+    elements = []
+    for string in itertools.chain.from_iterable(itertools.combinations(generators, r) for r in range(len(generators) + 1)):
+        elements.append(
+            functools.reduce(lambda a, b: a * b, string, stim.PauliString('_' * nq))
+        )
+    return elements
+
+
+def stim_strings_equal_up_to_phase(ps_a: stim.PauliString, ps_b: stim.PauliString) -> bool:
+    return list(ps_a) == list(ps_b)
+
+
+# TODO Replace this with a function that attempts to solve the system of equations.
+def test_group_membership(operator: stim.PauliString, generators: List[stim.PauliString]) -> bool:
+    """Test if the operator belongs to the group with the given generators."""
+
+    equality_tests = []
+    for ps in generate_stabilizer_elements(generators):
+        test = stim_strings_equal_up_to_phase(operator, ps)
+        equality_tests.append(test)
+    return any(equality_tests)
+
+
+def knill_laflamme_cost_function(generators: List[stim.PauliString], errors: List[float], weights: List[float]) -> float:
+    """Cost function from the RL paper."""
+
+    total_loss = 0.
+    for weight, err in zip(weights, errors):
+        anticommutation_tests = [not gen.commutes(err) for gen in generators]
+        in_stabilizer_group = test_group_membership(err, generators)
+        if any(anticommutation_tests) or in_stabilizer_group:
+            # The error is correctable, so K_mu = 1.
+            total_loss -= weight
+    return total_loss
