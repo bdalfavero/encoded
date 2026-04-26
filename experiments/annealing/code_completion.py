@@ -2,7 +2,7 @@ from random import randint
 import stim
 import numpy as np
 from simanneal import Annealer
-from encoded.add_stabilizers import knill_laflamme_cost_function
+from encoded.add_stabilizers import knill_laflamme_cost_function, knill_laflamme_correctable_cost_function
 
 stabilizers = [
     stim.PauliString("ZZI")
@@ -13,6 +13,9 @@ errors = [
     stim.PauliString("__X")
 ]
 weights = [1.] * len(errors)
+
+print(knill_laflamme_correctable_cost_function(stabilizers + [stim.PauliString("IZI")], errors, weights))
+print(knill_laflamme_correctable_cost_function(stabilizers + [stim.PauliString("IZZ")], errors, weights))
 
 class CodeCompletionAnnealer(Annealer):
 
@@ -26,10 +29,11 @@ class CodeCompletionAnnealer(Annealer):
         xs = self.state[:nq]
         zs = self.state[nq:]
         new_stabilizer = stim.PauliString.from_numpy(xs=xs, zs=zs)
-        qec_loss = knill_laflamme_cost_function(stabilizers + [new_stabilizer], errors, weights)
+        # qec_loss = knill_laflamme_cost_function(stabilizers + [new_stabilizer], errors, weights)
+        qec_loss = knill_laflamme_correctable_cost_function(stabilizers + [new_stabilizer], errors, weights)
         commutation_tests = [new_stabilizer.commutes(stab) for stab in stabilizers]
         commutation_loss = -1. * np.sum(commutation_tests)
-        return qec_loss + commutation_loss
+        return qec_loss + 0.1 * commutation_loss
 
 x0 = np.zeros(6).astype(bool)
 annealer = CodeCompletionAnnealer(x0)

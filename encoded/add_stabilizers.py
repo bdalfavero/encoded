@@ -97,3 +97,19 @@ def knill_laflamme_cost_function(generators: List[stim.PauliString], errors: Lis
             # The error is correctable, so K_mu = 1.
             total_loss -= weight
     return total_loss
+
+
+def knill_laflamme_correctable_cost_function(generators: List[stim.PauliString], errors: List[float], weights: List[float]) -> float:
+    """Check pairs of errors."""
+
+    total_loss = 0.
+    for weight1, err1 in zip(weights, errors):
+        for weight2, err2 in zip(weights, errors):
+            weight = weight1 * weight2
+            err = err1 * err2
+            anticommutation_tests = [not gen.commutes(err) for gen in generators]
+            in_stabilizer_group = test_group_membership(err, generators)
+            if any(anticommutation_tests) or in_stabilizer_group:
+                # The error is correctable, so K_mu = 1.
+                total_loss -= weight
+    return total_loss
