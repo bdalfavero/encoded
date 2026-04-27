@@ -94,3 +94,15 @@ def cirq_pauli_sum_to_openfermion_qubop(psum: cirq.PauliSum) -> of.QubitOperator
     qubop_list = to_groups_of(groups)
     assert len(qubop_list) == 1
     return qubop_list[0]
+
+
+def stim_pauli_string_to_circuit(pstring: stim.PauliString) -> stim.Circuit:
+    circuit = stim.Circuit()
+    for i, p in enumerate(pstring):
+        if p == 1:
+            circuit.append("X", [i])
+        elif p == 2:
+            circuit.append("Y", [i])
+        elif p == 3:
+            circuit.append("Z", [i])
+    return circuit
