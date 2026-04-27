@@ -2,20 +2,7 @@ import stim
 import htlogicalgates as htlg
 from encoded.utils import get_observables
 from encoded.prep_circuit import cb_prep_circuit
-
-def stim_pauli_string_to_htlg_str(ps: stim.PauliString) -> str:
-    ps_str = ""
-    for i, p in enumerate(ps):
-        if p == 1:
-            ps_str += f"X{i} "
-        elif p == 2:
-            ps_str += f"Y{i} "
-        elif p == 3:
-            ps_str += f"Z{i} "
-        else:
-            continue
-    return ps_str[:-1]
-
+from encoded.htlg_interface import stim_pauli_string_to_htlg_str, htlg_circuit_to_stim
 
 stabilizers = [
     stim.PauliString("ZZ_"),
@@ -41,9 +28,18 @@ print(encoding_ckt)
 
 # Get the physical version of the logical circuit.
 logical_gate = htlg.Circuit(1)
-logical_gate.h(0)
+logical_gate.x(0)
 stab_code = htlg.StabilizerCode(logical_xs_htlg, logical_zs_htlg, stabs_htlg)
 connectivity = htlg.Connectivity("circular", num_qubits=3)
 logical_circ, status = htlg.tailor_logical_gate(stab_code, connectivity, logical_gate, num_cz_layers=2)
+logical_ckt_stim = htlg_circuit_to_stim(logical_circ)
 print("Logical circuit")
-print(logical_circ)
+print(logical_ckt_stim)
+
+total_ckt = encoding_ckt + logical_ckt_stim
+for stab in stabilizers:
+    total_ckt.append("MPP", stab)
+total_ckt.append("MPP", logical_zs[0])
+sampler = total_ckt.compile_sampler()
+result = sampler.sample(10)
+print(result)
