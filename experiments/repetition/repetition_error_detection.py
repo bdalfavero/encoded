@@ -1,8 +1,11 @@
+import numpy as np
+import matplotlib.pyplot as plt
 import stim
 import htlogicalgates as htlg
 from encoded.utils import get_observables
 from encoded.prep_circuit import cb_prep_circuit
 from encoded.htlg_interface import stim_pauli_string_to_htlg_str, htlg_circuit_to_stim
+from encoded.error_detection import run_with_error_detection
 
 stabilizers = [
     stim.PauliString("ZZ_"),
@@ -36,10 +39,51 @@ logical_ckt_stim = htlg_circuit_to_stim(logical_circ)
 print("Logical circuit")
 print(logical_ckt_stim)
 
-total_ckt = encoding_ckt + logical_ckt_stim
-for stab in stabilizers:
-    total_ckt.append("MPP", stab)
-total_ckt.append("MPP", logical_zs[0])
-sampler = total_ckt.compile_sampler()
-result = sampler.sample(10)
-print(result)
+def noise_circuit(noise_rate: float) -> stim.Circuit:
+    noise_ckt = stim.Circuit()
+    noise_ckt.append("Depolarize1", range(3), arg=noise_rate)
+    return noise_ckt
+
+
+def stim_bits_to_floats(stim_bits: np.ndarray) -> np.ndarray:
+    floats = []
+    for bit in stim_bits:
+        if bit:
+            floats.append(-1.)
+        else:
+            floats.append(1.)
+    return np.array(floats)
+
+
+def unmitigated_expectation_value(noise_rate: float, shots: int) -> float:
+    noise_ckt = noise_circuit(noise_rate)
+    total_ckt = encoding_ckt + noise_ckt + logical_ckt_stim + noise_ckt
+    total_ckt.append("MPP", logical_zs[0])
+    sampler = total_ckt.compile_sampler()
+    bits = sampler.sample(shots)
+    floats = stim_bits_to_floats(bits)
+    return np.average(floats)
+
+
+def mitigated_expectation_value(noise_rate: float, shots: int) -> float:
+    noise_ckt = noise_circuit(noise_rate)
+    total_ckt = encoding_ckt + noise_ckt + logical_ckt_stim + noise_ckt
+    bits = run_with_error_detection(total_ckt, stabilizers, logical_zs[0], shots)
+    floats = stim_bits_to_floats(bits)
+    return np.average(floats)
+
+shots = 10_000
+noise_rates = np.linspace(1e-4, 1e-2, num=10)
+mitigated_results = []
+unmitigated_results = []
+for noise_rate in noise_rates:
+    mitigated_result = mitigated_expectation_value(noise_rate, shots)
+    unmitigated_result = unmitigated_expectation_value(noise_rate, shots)
+    mitigated_results.append(mitigated_result)
+    unmitigated_results.append(unmitigated_result)
+
+fig, ax = plt.subplots()
+ax.plot(noise_rates, mitigated_results, label="Mitigated")
+ax.plot(noise_rates, unmitigated_results, label="Unmitigated")
+ax.legend()
+plt.show()
