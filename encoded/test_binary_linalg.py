@@ -91,6 +91,22 @@ class TestRREF(unittest.TestCase):
         b_rref_target = np.array([False, True, True])
         A_rref, b_rref = _boolean_rref(A, b)
         self.assertTrue(np.allclose(A_rref_target, A_rref) and np.allclose(b_rref_target, b_rref))
+    
+    def test_zzi_ziz_iiz(self):
+        A = np.array([
+            [True, True, False, False, False, False],
+            [True, False, True, False, False, False],
+            [False, False, True, False, False, False]
+        ])
+        b = np.array([False, False, True])
+        A_target = np.array([
+            [True, True, False, False, False, False],
+            [False, True, True, False, False, False],
+            [False, False, True, False, False, False]
+        ])
+        b_target = np.array([False, False, True])
+        A_rref, b_rref = _boolean_rref(A, b)
+        self.assertTrue(np.allclose(A_target, A_rref) and np.allclose(b_target, b_rref))
 
 
 class TestBacksub(unittest.TestCase):
@@ -434,7 +450,7 @@ class TestHasSolutions(unittest.TestCase):
         A_rref, b_rref = _boolean_rref(A, b)
         has_solns = system_has_solutions(A_rref, b_rref)
         self.assertTrue(has_solns)
-    
+
     def test_bad_b(self):
         A = np.array([
             [True, True],

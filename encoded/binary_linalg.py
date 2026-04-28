@@ -67,7 +67,7 @@ def _boolean_rref(A: np.ndarray, b: np.ndarray) -> np.ndarray:
         b_copy = _swap_elems(b_copy, idx_first_one, i)
         # Eliminate all other rows i where A[i, j] = 1.
         for k in range(i+1, A.shape[0]):
-            if A_copy[k, j]:
+            if A_copy[k, j] and k != j:
                 A_copy[k, :] = A_copy[k, :] ^ A_copy[j, :]
                 b_copy[k] = b_copy[k] ^ b_copy[j]
         i += 1
