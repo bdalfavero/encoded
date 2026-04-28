@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 import stim
-from encoded.add_stabilizers import _form_linear_system, add_stabilizer, test_group_membership, knill_laflamme_cost_function
+from encoded.add_stabilizers import _form_linear_system, add_stabilizer, test_group_membership, knill_laflamme_cost_function, build_code_randomly
 
 class TestLinearSystem(unittest.TestCase):
 
@@ -79,6 +79,13 @@ class TestGroupMembership(unittest.TestCase):
             stim.PauliString("_ZZ")
         ]
         self.assertTrue(test_group_membership(operator, generators))
+    
+    def test_id_in_repetition(self):
+        operator = stim.PauliString("__")
+        generators = [
+            stim.PauliString("ZZ_"),
+            stim.PauliString("_ZZ")
+        ]
 
 
 class TestKLCost(unittest.TestCase):
@@ -138,6 +145,22 @@ class TestKLCost(unittest.TestCase):
         weights = [1.] * len(errors)
         loss = knill_laflamme_cost_function(generators, errors, weights)
         self.assertTrue(abs(loss + len(errors)) <= 1e-12)
+
+
+class TestBuildCodes(unittest.TestCase):
+
+    def test_full_repetition(self):
+        stabilizers = [stim.PauliString("ZZ_"), stim.PauliString("_ZZ")]
+        errors = [stim.PauliString("X__"), stim.PauliString("_X_"), stim.PauliString("__X")]
+        new_stabilizers = build_code_randomly(stabilizers, errors, extra_support=None)
+        self.assertTrue(new_stabilizers == stabilizers)
+
+    def test_partial_repetition(self):
+        stabilizers = [stim.PauliString("ZZ")]
+        errors = [stim.PauliString("X_"), stim.PauliString("_X")]
+        new_stabilizers = build_code_randomly(stabilizers, errors, extra_support=stim.PauliString("Z"))
+        target_stabilizers = [stim.PauliString("ZZ_"), stim.PauliString("Z_Z")]
+        self.assertTrue(new_stabilizers == target_stabilizers)
 
 if __name__ == "__main__":
     unittest.main()

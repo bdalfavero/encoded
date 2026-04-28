@@ -1,6 +1,7 @@
 from typing import List, Tuple, Optional
 import itertools
 import functools
+from random import randrange
 from copy import deepcopy
 import numpy as np
 import stim
@@ -79,9 +80,16 @@ def stim_strings_equal_up_to_phase(ps_a: stim.PauliString, ps_b: stim.PauliStrin
 def test_group_membership(operator: stim.PauliString, generators: List[stim.PauliString]) -> bool:
     """Test if the operator belongs to the group with the given generators."""
 
+    # If we pass in an operator that is too shot, add identities to the end.
+    nq = max([len(gen) for gen in generators])
+    if len(operator) < nq:
+        new_operator = operator + stim.PauliString("_" * (nq - len(operator)))
+    else:
+        new_operator = operator
+
     equality_tests = []
     for ps in generate_stabilizer_elements(generators):
-        test = stim_strings_equal_up_to_phase(operator, ps)
+        test = stim_strings_equal_up_to_phase(new_operator, ps)
         equality_tests.append(test)
     return any(equality_tests)
 
@@ -113,3 +121,32 @@ def knill_laflamme_correctable_cost_function(generators: List[stim.PauliString],
                 # The error is correctable, so K_mu = 1.
                 total_loss -= weight
     return total_loss
+
+
+def get_uncorrectable_errors(generators: List[stim.PauliString], errors: List[stim.PauliString]) -> List[stim.PauliString]:
+    """Get the products of errors that the code cannot correct."""
+
+    uncorrectable_errs = []
+    for i, e_i in enumerate(errors):
+        for j, e_j in enumerate(errors):
+            e = e_i * e_j
+            anti_commute_tests = [not e.commutes(g) for g in generators]
+            in_group = test_group_membership(e, generators)
+            if not (any(anti_commute_tests) or in_group):
+                uncorrectable_errs.append(e)
+    return uncorrectable_errs
+
+
+def build_code_randomly(
+    generators: List[stim.PauliString], errors: List[stim.PauliString], extra_support: Optional[stim.PauliString]=None,
+    max_iter: int = 1_000
+) -> List[stim.PauliString]:
+    """Build a code by randomly picking the error(s) that the new stabilizer will anticommute with."""
+
+    new_generators = deepcopy(generators)
+    uncorrectables = get_uncorrectable_errors(new_generators, errors)
+    while len(uncorrectables) != 0:
+        i = randrange(len(uncorrectables))
+        new_generators = add_stabilizer(new_generators, [uncorrectables[i]], extra_support=extra_support)
+        uncorrectables = get_uncorrectable_errors(new_generators, errors)
+    return new_generators
