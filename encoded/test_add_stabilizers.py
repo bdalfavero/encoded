@@ -162,5 +162,17 @@ class TestBuildCodes(unittest.TestCase):
         target_stabilizers = [stim.PauliString("ZZ_"), stim.PauliString("Z_Z")]
         self.assertTrue(new_stabilizers == target_stabilizers)
 
+    def test_expanded_repetition(self):
+        stabilizers = [stim.PauliString("ZZ_"), stim.PauliString("Z_Z")]
+        errors = [
+            stim.PauliString("___"),
+            stim.PauliString("X__"), stim.PauliString("_X_"), stim.PauliString("__X"),
+            stim.PauliString("Z__"), stim.PauliString("_Z_"), stim.PauliString("__Z")
+        ]
+        new_stabilizers = build_code_randomly(stabilizers, errors, extra_support=stim.PauliString("X"))
+        target_stabilizers = [stim.PauliString("ZZ__"), stim.PauliString("Z_Z_"), stim.PauliString("XXXX")]
+        # print(new_stabilizers)
+        self.assertTrue(new_stabilizers == target_stabilizers)
+
 if __name__ == "__main__":
     unittest.main()

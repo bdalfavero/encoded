@@ -21,6 +21,11 @@ def _form_linear_system(generators: List[stim.PauliString], errors: List[stim.Pa
     """Form the linear system that requires the new generator to commute with the existing
     generators and anticommute with the given errors."""
 
+    # for gen in generators:
+    #     print(gen)
+    # for err in errors:
+    #     print(err)
+
     generator_matrix = generators_to_matrix(generators)
     error_matrix = generators_to_matrix(errors)
     pstring_matrix = np.hstack((generator_matrix, error_matrix))
@@ -147,6 +152,12 @@ def build_code_randomly(
     uncorrectables = get_uncorrectable_errors(new_generators, errors)
     while len(uncorrectables) != 0:
         i = randrange(len(uncorrectables))
-        new_generators = add_stabilizer(new_generators, [uncorrectables[i]], extra_support=extra_support)
+        new_generators = add_stabilizer(new_generators, [uncorrectables[i]], extra_support=extra_support, verbose=False)
+        # print("New stabilizer:", new_generators[-1])
         uncorrectables = get_uncorrectable_errors(new_generators, errors)
+        # If there are now more qubits in the stabilizers than the erros, add qubits to the errors.
+        nq = max(len(gen) for gen in new_generators)
+        for i in range(len(uncorrectables)):
+            if len(uncorrectables[i]) < nq:
+                uncorrectables[i] += stim.PauliString("_" * (nq - len(uncorrectables[i])))
     return new_generators
