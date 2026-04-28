@@ -49,13 +49,12 @@ class TestAddStabilizer(unittest.TestCase):
 
     def test_zzi_e_iix(self):
         stabilizers = [
-            stim.PauliString("ZZI"),
+            stim.PauliString("ZZ"),
         ]
         errs = [
-            stim.PauliString("XXI"),
-            stim.PauliString("IIX")
+            stim.PauliString("XX")
         ]
-        new_stabilizers = add_stabilizer(stabilizers, errs, verbose=False)
+        new_stabilizers = add_stabilizer(stabilizers, errs, verbose=False, extra_support=stim.PauliString("Z"))
         target_stabilizers = [
             stim.PauliString("ZZI"),
             stim.PauliString("ZIZ"),
