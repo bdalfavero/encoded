@@ -45,7 +45,10 @@ logical_gate.h(1)
 # logical_gate.cx(0, 1)
 stab_code = htlg.StabilizerCode(logical_xs_htlg, logical_zs_htlg, stabs_htlg)
 connectivity = htlg.Connectivity("circular", num_qubits=8)
-logical_circ, status = htlg.tailor_logical_gate(stab_code, connectivity, logical_gate, num_cz_layers=4)
+logical_circ, status = htlg.tailor_logical_gate(
+    stab_code, connectivity, logical_gate, num_cz_layers=4,
+    time_limit=3.6e3, log_to_console=True, optimize=False
+)
 print(status)
 logical_ckt_stim = htlg_circuit_to_stim(logical_circ)
 print("Logical circuit")
