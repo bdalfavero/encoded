@@ -205,3 +205,16 @@ def enumerate_all_solutions(A: np.ndarray, b: np.ndarray) -> List[np.ndarray]:
             x = solve_with_known_values(A, b, known_values)
             solutions.append(x)
     return solutions
+
+
+def system_has_solutions(A_rref: np.ndarray, b_rref: np.ndarray) -> bool:
+    """Test is the system in RREF has a solution. The criterion is that
+    there should be no row in the reduced augmented matrix of the form
+    [0 0 ... 0 | 1] (i.e. the row of A is all zero and the element of b is 1)."""
+
+    assert b_rref.size == A_rref.shape[0]
+
+    for i in range(A_rref.shape[0]):
+        if np.all(np.invert(A_rref[i, :])) and b_rref[i]:
+            return False
+    return True

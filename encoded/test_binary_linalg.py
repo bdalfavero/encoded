@@ -6,7 +6,8 @@ from encoded.binary_linalg import (
     solve_boolean_system, _pivot_columns,
     _pivot_locations, _single_row_backsub,
     _enumerate_bitstrings,
-    solve_with_known_values, enumerate_all_solutions
+    solve_with_known_values, enumerate_all_solutions,
+    system_has_solutions
 )
 
 class TestRREF(unittest.TestCase):
@@ -413,6 +414,36 @@ class TestEnumerateBitstrings(unittest.TestCase):
         for b1, b2 in zip(bitstrings, targets):
             all_equal.append(np.allclose(b1, b2))
         self.assertTrue(all(all_equal))
+
+
+class TestHasSolutions(unittest.TestCase):
+
+    def test_id(self):
+        A = np.eye(4).astype(bool)
+        b = np.array([True, False, True, True])
+        A_rref, b_rref = _boolean_rref(A, b)
+        has_solns = system_has_solutions(A_rref, b_rref)
+        self.assertTrue(has_solns)
+
+    def test_upper_triangular(self):
+        A = np.array([
+            [True, True],
+            [False, True]
+        ])
+        b = np.array([True, False])
+        A_rref, b_rref = _boolean_rref(A, b)
+        has_solns = system_has_solutions(A_rref, b_rref)
+        self.assertTrue(has_solns)
+    
+    def test_bad_b(self):
+        A = np.array([
+            [True, True],
+            [False, False]
+        ])
+        b = np.array([True, True])
+        A_rref, b_rref = _boolean_rref(A, b)
+        has_solns = system_has_solutions(A_rref, b_rref)
+        self.assertFalse(has_solns)
 
 if __name__ == "__main__":
     unittest.main()
