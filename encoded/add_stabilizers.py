@@ -152,7 +152,7 @@ def build_code_randomly(
     uncorrectables = get_uncorrectable_errors(new_generators, errors)
     while len(uncorrectables) != 0:
         i = randrange(len(uncorrectables))
-        new_generators = add_stabilizer(new_generators, [uncorrectables[i]], extra_support=extra_support, verbose=False)
+        new_generators = add_stabilizer(new_generators, [uncorrectables[i]], extra_support=extra_support, verbose=True)
         # print("New stabilizer:", new_generators[-1])
         uncorrectables = get_uncorrectable_errors(new_generators, errors)
         # If there are now more qubits in the stabilizers than the erros, add qubits to the errors.
