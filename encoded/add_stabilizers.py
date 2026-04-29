@@ -1,7 +1,7 @@
 from typing import List, Tuple, Optional
 import itertools
 import functools
-from random import randrange
+from random import randrange, seed
 from copy import deepcopy
 import numpy as np
 import stim
@@ -146,15 +146,16 @@ def get_uncorrectable_errors(generators: List[stim.PauliString], errors: List[st
 
 def build_code_randomly(
     generators: List[stim.PauliString], errors: List[stim.PauliString], extra_support: Optional[stim.PauliString]=None,
-    max_iter: int = 1_000
+    max_iter: int = 1_000, seed_val: int=137
 ) -> List[stim.PauliString]:
     """Build a code by randomly picking the error(s) that the new stabilizer will anticommute with."""
 
+    seed(seed_val)
     new_generators = deepcopy(generators)
     uncorrectables = get_uncorrectable_errors(new_generators, errors)
     while len(uncorrectables) != 0:
         i = randrange(len(uncorrectables))
-        new_generators = add_stabilizer(new_generators, [uncorrectables[i]], extra_support=extra_support, verbose=True)
+        new_generators = add_stabilizer(new_generators, [uncorrectables[i]], extra_support=extra_support, verbose=False)
         # print("New stabilizer:", new_generators[-1])
         uncorrectables = get_uncorrectable_errors(new_generators, errors)
         # If there are now more qubits in the stabilizers than the erros, add qubits to the errors.

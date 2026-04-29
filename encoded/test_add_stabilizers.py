@@ -173,6 +173,15 @@ class TestBuildCodes(unittest.TestCase):
         target_stabilizers = [stim.PauliString("ZZ__"), stim.PauliString("Z_Z_"), stim.PauliString("XXXX")]
         # print(new_stabilizers)
         self.assertTrue(new_stabilizers == target_stabilizers)
+    
+    def test_z1z2_arbitrary(self):
+        """Second example from the overleaf."""
+
+        stabilizers = [stim.PauliString("ZZ")]
+        errors = [stim.PauliString("__"), stim.PauliString("X_"), stim.PauliString("_X"), stim.PauliString("Z_"), stim.PauliString("_Z")]
+        new_stabilizers = build_code_randomly(stabilizers, errors, extra_support=stim.PauliString("Z"))
+        target_stabilizers = [stim.PauliString("ZZ__"), stim.PauliString("XXZ_"), stim.PauliString("Z_XZ")]
+        self.assertTrue(new_stabilizers == target_stabilizers)
 
 if __name__ == "__main__":
     unittest.main()
