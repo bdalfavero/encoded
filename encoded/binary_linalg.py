@@ -52,25 +52,46 @@ def _boolean_rref(A: np.ndarray, b: np.ndarray) -> np.ndarray:
 
     i = 0 # Row at which to make a pivot.
     for j in range(A.shape[1]):
-        if np.all(np.invert(A[i:, j])):
+        # print(f"i={i} j={j}")
+        # print("A=")
+        # print(A_copy)
+        # print("b=")
+        # print(b_copy)
+        if np.all(np.invert(A_copy[i:, j])):
+            # print("Premature continue")
             continue
         # Find the first index i s.t. A[i, j] = 1.
         found = False
         for idx_first_one in range(i, A_copy.shape[0]):
+            # print(f"idx_first_one={idx_first_one}")
             if A_copy[idx_first_one, j]:
                 found = True
+                # print("Found!")
                 break
         if not found:
             continue
         # Swap that row with the j^th row.
+        # print(f"Swapping {idx_first_one} <-> {i}")
         A_copy = _swap_row(A_copy, idx_first_one, i)
         b_copy = _swap_elems(b_copy, idx_first_one, i)
         # Eliminate all other rows i where A[i, j] = 1.
         for k in range(i+1, A.shape[0]):
-            if A_copy[k, j] and k != j:
-                A_copy[k, :] = A_copy[k, :] ^ A_copy[j, :]
-                b_copy[k] = b_copy[k] ^ b_copy[j]
+            # print(f"k={k}")
+            # if A_copy[k, j] and k != j:
+            #     A_copy[k, :] = A_copy[k, :] ^ A_copy[j, :]
+            #     b_copy[k] = b_copy[k] ^ b_copy[j]
+            if A_copy[k, j]:
+                # print(f"XOR {k} {j}")
+                A_copy[k, :] = A_copy[k, :] ^ A_copy[i, :]
+                b_copy[k] = b_copy[k] ^ b_copy[i]
         i += 1
+        if i >= A.shape[0]:
+            break
+    # print("Final")
+    # print("A=")
+    # print(A_copy)
+    # print("b=")
+    # print(b_copy)
     return A_copy, b_copy
 
 def _boolean_backsub_solve(A_rref: np.ndarray, b_rref: np.ndarray) -> np.ndarray:

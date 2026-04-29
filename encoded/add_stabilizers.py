@@ -63,6 +63,8 @@ def add_stabilizer(
         old_generators = [gen + id_extra for gen in generators]
     else:
         old_generators = deepcopy(generators)
+    for err in errors:
+        assert not new_generator.commutes(err), f"[{new_generator}, {err}] = 0"
     new_generators = old_generators + [new_generator]
     return new_generators
 
