@@ -1,27 +1,16 @@
 """Using the eight-qubit system with its two symmetry group generators,
 prepare a logical Bell state on the first two logical qubits and measure <Z0Z1>."""
 
+import pickle
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 import stim
 import htlogicalgates as htlg
 from encoded.utils import get_observables
 from encoded.prep_circuit import cb_prep_circuit
 from encoded.htlg_interface import stim_pauli_string_to_htlg_str, htlg_circuit_to_stim
 from encoded.error_detection import run_with_error_detection
-
-def stim_pauli_string_to_htlg_str(ps: stim.PauliString) -> str:
-    ps_str = ""
-    for i, p in enumerate(ps):
-        if p == 1:
-            ps_str += f"X{i} "
-        elif p == 2:
-            ps_str += f"Y{i} "
-        elif p == 3:
-            ps_str += f"Z{i} "
-        else:
-            continue
-    return ps_str[:-1]
 
 stabilizers = [
     stim.PauliString("Z_Z_Z_Z_"),
@@ -31,28 +20,37 @@ logical_ops = get_observables(stabilizers)
 logical_zs = [t[1] for t in logical_ops]
 logical_xs = [t[0] for t in logical_ops]
 
-stabs_htlg = [stim_pauli_string_to_htlg_str(stab) for stab in stabilizers]
-logical_zs_htlg = [stim_pauli_string_to_htlg_str(zbar) for zbar in logical_zs]
-logical_xs_htlg = [stim_pauli_string_to_htlg_str(xbar) for xbar in logical_xs]
+# stabs_htlg = [stim_pauli_string_to_htlg_str(stab) for stab in stabilizers]
+# logical_zs_htlg = [stim_pauli_string_to_htlg_str(zbar) for zbar in logical_zs]
+# logical_xs_htlg = [stim_pauli_string_to_htlg_str(xbar) for xbar in logical_xs]
 
-encoding_ckt = cb_prep_circuit(stabilizers, logical_zs, [False] * 6)
-print("Encoding circuit")
-print(encoding_ckt)
+# encoding_ckt = cb_prep_circuit(stabilizers, logical_zs, [False] * 6)
+# print("Encoding circuit")
+# print(encoding_ckt)
 
-# Get the physical version of the logical circuit.
-logical_gate = htlg.Circuit(6)
-logical_gate.h(1)
-# logical_gate.cx(0, 1)
-stab_code = htlg.StabilizerCode(logical_xs_htlg, logical_zs_htlg, stabs_htlg)
-connectivity = htlg.Connectivity("circular", num_qubits=8)
-logical_circ, status = htlg.tailor_logical_gate(
-    stab_code, connectivity, logical_gate, num_cz_layers=4,
-    time_limit=3.6e3, log_to_console=True, optimize=False
-)
-print(status)
-logical_ckt_stim = htlg_circuit_to_stim(logical_circ)
-print("Logical circuit")
-print(logical_ckt_stim)
+# # Get the physical version of the logical circuit.
+# logical_gate = htlg.Circuit(6)
+# # logical_gate.h(1)
+# logical_gate.h(0)
+# # logical_gate.cx(0, 1)
+# stab_code = htlg.StabilizerCode(logical_xs_htlg, logical_zs_htlg, stabs_htlg)
+# connectivity = htlg.Connectivity("circular", num_qubits=8)
+# logical_circ, status = htlg.tailor_logical_gate(
+#     stab_code, connectivity, logical_gate, num_cz_layers=4,
+#     time_limit=3.6e3, log_to_console=True, optimize=False
+# )
+# print(status)
+# logical_ckt_stim = htlg_circuit_to_stim(logical_circ)
+# print("Logical circuit")
+# print(logical_ckt_stim)
+
+with open("eight_qubit_circuits.pkl", "rb") as f:
+    input_dict= pickle.load(f)
+
+encoding_ckt = input_dict["encoding"]
+logical_h = input_dict["logical_h"]
+logical_cx = input_dict["logical_cx"]
+logical_ckt_stim = logical_h # + logical_cx
 
 def noise_circuit(noise_rate: float) -> stim.Circuit:
     noise_ckt = stim.Circuit()
@@ -73,7 +71,7 @@ def stim_bits_to_floats(stim_bits: np.ndarray) -> np.ndarray:
 def unmitigated_expectation_value(noise_rate: float, shots: int) -> float:
     noise_ckt = noise_circuit(noise_rate)
     total_ckt = encoding_ckt + noise_ckt + logical_ckt_stim + noise_ckt
-    total_ckt.append("MPP", logical_zs[0])
+    total_ckt.append("MPP", logical_xs[0])
     sampler = total_ckt.compile_sampler()
     bits = sampler.sample(shots)
     floats = stim_bits_to_floats(bits)
@@ -83,7 +81,7 @@ def unmitigated_expectation_value(noise_rate: float, shots: int) -> float:
 def mitigated_expectation_value(noise_rate: float, shots: int) -> float:
     noise_ckt = noise_circuit(noise_rate)
     total_ckt = encoding_ckt + noise_ckt + logical_ckt_stim + noise_ckt
-    bits = run_with_error_detection(total_ckt, stabilizers, logical_zs[0], shots)
+    bits = run_with_error_detection(total_ckt, stabilizers, logical_xs[0], shots)
     floats = stim_bits_to_floats(bits)
     return np.average(floats)
 
