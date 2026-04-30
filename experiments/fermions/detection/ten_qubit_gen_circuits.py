@@ -28,11 +28,11 @@ print(encoding_ckt)
 
 # Get the circuit for Hadamard
 logical_gate = htlg.Circuit(6)
-logical_gate.h(1)
+logical_gate.h(0)
 stab_code = htlg.StabilizerCode(logical_xs_htlg, logical_zs_htlg, stabs_htlg)
 connectivity = htlg.Connectivity("circular", num_qubits=nq)
 logical_circ, status = htlg.tailor_logical_gate(
-    stab_code, connectivity, logical_gate, num_cz_layers=6, time_limit=3.6e3, log_to_console=True,
+    stab_code, connectivity, logical_gate, num_cz_layers=6, time_limit=2 * 3.6e3, log_to_console=True,
     optimize=False
 )
 print(status)
