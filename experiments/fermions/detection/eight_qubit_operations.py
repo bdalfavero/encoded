@@ -85,18 +85,28 @@ def mitigated_expectation_value(noise_rate: float, shots: int) -> float:
     floats = stim_bits_to_floats(bits)
     return np.average(floats)
 
-shots = 10_000
+shots = 100_000
+reps = 2
 noise_rates = np.linspace(1e-4, 1e-2, num=10)
-mitigated_results = []
-unmitigated_results = []
+records = []
 for noise_rate in noise_rates:
-    mitigated_result = mitigated_expectation_value(noise_rate, shots)
-    unmitigated_result = unmitigated_expectation_value(noise_rate, shots)
-    mitigated_results.append(mitigated_result)
-    unmitigated_results.append(unmitigated_result)
+    all_reps_mitigated = []
+    all_reps_unmitigated = []
+    for _ in range(reps):
+        mitigated_result = mitigated_expectation_value(noise_rate, shots)
+        unmitigated_result = unmitigated_expectation_value(noise_rate, shots)
+        all_reps_mitigated.append(mitigated_result)
+        all_reps_unmitigated.append(unmitigated_result)
+    records.append((
+        noise_rate,
+        np.average(all_reps_mitigated), np.std(all_reps_mitigated),
+        np.average(all_reps_unmitigated), np.std(all_reps_unmitigated)
+    ))
+df = pd.DataFrame.from_records(records, columns=["noise_rate", "mitigated_avg", "mitigated_std", "unmitigated_avg", "unmitigated_std"])
+df.to_csv("eight_qubit_result.csv")
 
-fig, ax = plt.subplots()
-ax.plot(noise_rates, mitigated_results, label="Mitigated")
-ax.plot(noise_rates, unmitigated_results, label="Unmitigated")
-ax.legend()
-plt.show()
+# fig, ax = plt.subplots()
+# ax.errorbar(df["noise_rate"], df["mitigated_avg"], yerr=df["mitigated_std"], label="Mitigated")
+# ax.errorbar(df["noise_rate"], df["unmitigated_avg"], yerr=df["unmitigated_std"], label="Unmitigated")
+# ax.legend()
+# plt.show()
