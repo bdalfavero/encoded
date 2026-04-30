@@ -5,14 +5,14 @@ import stim
 
 def run_with_error_detection(
     circuit: stim.Circuit, stabilizers: List[stim.PauliString], observable: stim.PauliString,
-    shots: int
+    shots: int, noise_rate: float = 0.
 ) -> np.ndarray:
     """Measure a the eigenvalues of a Pauli string after executing a circuit and postselecting on
     all stabilizers being measured as zero."""
 
     total_ckt = deepcopy(circuit)
     for stab in stabilizers:
-        total_ckt.append("MPP", stab)
+        total_ckt.append("MPP", stab, arg=noise_rate)
     total_ckt.append("MPP", observable)
     sampler = total_ckt.compile_sampler()
     result = sampler.sample(shots)
