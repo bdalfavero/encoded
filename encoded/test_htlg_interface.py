@@ -25,8 +25,8 @@ class TestConversion(unittest.TestCase):
         htlg_circuit = htlg.Circuit(2)
         htlg_circuit.c_xyz(1)
         stim_target = stim.Circuit()
-        stim_target.append("H", [1])
         stim_target.append("S_DAG", [1])
+        stim_target.append("H", [1])
         stim_actual = htlg_circuit_to_stim(htlg_circuit)
         self.assertEqual(stim_actual, stim_target)
 

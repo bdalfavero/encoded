@@ -39,11 +39,11 @@ def htlg_circuit_to_stim(circuit: htlg.Circuit) -> stim.Circuit:
         elif gate == htlg.circuit.Operation.SXDG:
             stim_ckt.append("SQRT_X_DAG", qs)
         elif gate == htlg.circuit.Operation.C_XYZ:
-            stim_ckt.append("H", qs)
             stim_ckt.append("S_DAG", qs)
-        elif gate == htlg.circuit.Operation.C_ZYX:
-            stim_ckt.append("S", qs)
             stim_ckt.append("H", qs)
+        elif gate == htlg.circuit.Operation.C_ZYX:
+            stim_ckt.append("H", qs)
+            stim_ckt.append("S", qs)
         elif gate == htlg.circuit.Operation.CX:
             stim_ckt.append("CNOT", list(qs))
         elif gate == htlg.circuit.Operation.CZ:
