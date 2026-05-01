@@ -1,5 +1,6 @@
 from typing import List, Optional, Dict
 from functools import reduce
+import numpy as np
 import stim
 import cirq
 import openfermion as of
@@ -106,3 +107,13 @@ def stim_pauli_string_to_circuit(pstring: stim.PauliString) -> stim.Circuit:
         elif p == 3:
             circuit.append("Z", [i])
     return circuit
+
+
+def stim_bits_to_floats(stim_bits: np.ndarray) -> np.ndarray:
+    floats = []
+    for bit in stim_bits:
+        if bit:
+            floats.append(-1.)
+        else:
+            floats.append(1.)
+    return np.array(floats)

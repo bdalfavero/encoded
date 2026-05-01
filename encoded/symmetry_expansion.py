@@ -2,6 +2,9 @@ from typing import List, Optional
 import numpy as np
 from cirq import Simulator, Circuit, PauliSum
 import cirq
+import stim
+from encoded.add_stabilizers import generate_stabilizer_elements
+from encoded.utils import stim_bits_to_floats
 
 def symmetry_expansion(
     ckt: Circuit, observable: PauliSum, group_ops: List[PauliSum], sim=Simulator(),
@@ -27,6 +30,35 @@ def symmetry_expansion(
         return sum(expectations).real / sum(denominators).real, expectations, denominators
     else:
         return sum(expectations).real / sum(denominators).real
+
+
+def stim_subspace_expansion(
+    circuit: stim.Circuit, observable: stim.PauliString, generators: List[stim.PauliString], shots: int
+) -> float:
+    """Get the expectation value of an observable using symmetry expansion and a stim circuit."""
+
+    def _exp_val(op: stim.PauliString) -> float:
+        if op == stim.PauliString("_" * len(op)):
+            # Stim can't measure the identity with MPP, apparently.
+            return 1.
+        else:
+            total_ckt = stim.Circuit()
+            total_ckt += circuit
+            total_ckt.append("MPP", op)
+            sampler = total_ckt.compile_sampler()
+            results = sampler.sample(shots)
+            result_floats = stim_bits_to_floats(results)
+            return np.average(result_floats)
+    
+    group_elements = generate_stabilizer_elements(generators)
+    numerators = []
+    denominators = []
+    for elem in group_elements:
+        numerator = _exp_val(observable * elem)
+        denominator = _exp_val(elem)
+        numerators.append(numerator)
+        denominators.append(denominator)
+    return np.sum(numerators) / np.sum(denominators)
 
 if __name__ == "__main__":
     qs = cirq.LineQubit.range(2)
