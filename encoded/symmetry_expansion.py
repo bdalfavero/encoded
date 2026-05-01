@@ -58,6 +58,8 @@ def stim_subspace_expansion(
         denominator = _exp_val(elem)
         numerators.append(numerator)
         denominators.append(denominator)
+    # print(f"numerator = {np.sum(numerators)}")
+    # print(f"denominator = {np.sum(denominators)}")
     return np.sum(numerators) / np.sum(denominators)
 
 if __name__ == "__main__":
