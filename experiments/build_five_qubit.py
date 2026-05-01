@@ -15,9 +15,14 @@ stabilizers = [
     stim.PauliString("IXZZX"),
 ]
 errors = all_single_qubit_errors(5)
-new_stabilizers = build_code_randomly(stabilizers, errors)
+new_stabilizers = build_code_randomly(stabilizers, errors, seed_val=12, errors_per_round=4)
+print(f"New code has {len(new_stabilizers)} stabilizers.")
 for stab in new_stabilizers:
     print(stab)
+
+for s1 in new_stabilizers:
+    for s2 in new_stabilizers:
+        assert s1.commutes(s2)
 
 for e1 in errors:
     for e2 in errors:
