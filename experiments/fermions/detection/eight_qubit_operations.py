@@ -85,8 +85,8 @@ def mitigated_expectation_value(noise_rate: float, measure_noise_rate: float, sh
     floats = stim_bits_to_floats(bits)
     return np.average(floats)
 
-shots = 100_000
-reps = 2
+shots = 10_000
+reps = 10
 noise_rates = np.linspace(1e-4, 1e-2, num=10)
 records = []
 for noise_rate in noise_rates:
