@@ -1,4 +1,5 @@
 from typing import List, Tuple, Optional
+from warnings import warn
 import itertools
 import functools
 from random import randrange, seed
@@ -153,6 +154,7 @@ def build_code_randomly(
     seed(seed_val)
     new_generators = deepcopy(generators)
     uncorrectables = get_uncorrectable_errors(new_generators, errors)
+    iters = 0
     while len(uncorrectables) != 0:
         i = randrange(len(uncorrectables))
         new_generators = add_stabilizer(new_generators, [uncorrectables[i]], extra_support=extra_support, verbose=False)
@@ -163,4 +165,8 @@ def build_code_randomly(
         for i in range(len(uncorrectables)):
             if len(uncorrectables[i]) < nq:
                 uncorrectables[i] += stim.PauliString("_" * (nq - len(uncorrectables[i])))
+        iters += 1
+        if iters > max_iter:
+            warn(f"Exceeded max iterations ({max_iter}).")
+            break
     return new_generators
