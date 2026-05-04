@@ -96,7 +96,8 @@ def unmitigated_expectation_value(noise_rate: float, ancilla_noise_rate: float, 
             noise_map[idx] = noise_rate
         else:
             noise_map[idx] = ancilla_noise_rate
-    noisy_encoding_ckt = stim_circuit_with_qubit_dependent_noise_rate(encoding_ckt, noise_map)
+    # noisy_encoding_ckt = stim_circuit_with_qubit_dependent_noise_rate(encoding_ckt, noise_map)
+    noisy_encoding_ckt = encoding_ckt
     noisy_logical_ckt = stim_circuit_with_qubit_dependent_noise_rate(logical_ckt_stim, noise_map)
     total_ckt = noisy_encoding_ckt + noisy_logical_ckt
     total_ckt.append("MPP", logical_xs[0] * logical_xs[1])
@@ -115,7 +116,8 @@ def mitigated_expectation_value(noise_rate: float, ancilla_noise_rate: float, me
             noise_map[idx] = noise_rate
         else:
             noise_map[idx] = ancilla_noise_rate
-    noisy_encoding_ckt = stim_circuit_with_qubit_dependent_noise_rate(encoding_ckt, noise_map)
+    # noisy_encoding_ckt = stim_circuit_with_qubit_dependent_noise_rate(encoding_ckt, noise_map)
+    noisy_encoding_ckt = encoding_ckt
     noisy_logical_ckt = stim_circuit_with_qubit_dependent_noise_rate(logical_ckt_stim, noise_map)
     total_ckt = noisy_encoding_ckt + noisy_logical_ckt
     bits = run_with_error_detection(total_ckt, stabilizers, logical_xs[0] * logical_xs[1], shots, measure_noise_rate)

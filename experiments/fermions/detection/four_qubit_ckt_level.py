@@ -56,7 +56,8 @@ def stim_bits_to_floats(stim_bits: np.ndarray) -> np.ndarray:
 def unmitigated_expectation_value(noise_rate: float, shots: int) -> float:
     # noise_ckt = noise_circuit(noise_rate)
     noise_dict = {idx: noise_rate for idx in range(4)}
-    noisy_encoding_ckt = stim_circuit_with_qubit_dependent_noise_rate(encoding_ckt, noise_dict)
+    # noisy_encoding_ckt = stim_circuit_with_qubit_dependent_noise_rate(encoding_ckt, noise_dict)
+    noisy_encoding_ckt = encoding_ckt
     noisy_logical_ckt = stim_circuit_with_qubit_dependent_noise_rate(logical_ckt_stim, noise_dict)
     # total_ckt = encoding_ckt + noise_ckt + logical_ckt_stim + noise_ckt
     total_ckt = noisy_encoding_ckt + noisy_logical_ckt
@@ -70,7 +71,8 @@ def unmitigated_expectation_value(noise_rate: float, shots: int) -> float:
 def mitigated_expectation_value(noise_rate: float, measure_noise_rate: float, shots: int) -> float:
     # noise_ckt = noise_circuit(noise_rate)
     noise_dict = {idx: noise_rate for idx in range(4)}
-    noisy_encoding_ckt = stim_circuit_with_qubit_dependent_noise_rate(encoding_ckt, noise_dict)
+    # noisy_encoding_ckt = stim_circuit_with_qubit_dependent_noise_rate(encoding_ckt, noise_dict)
+    noisy_encoding_ckt = encoding_ckt
     noisy_logical_ckt = stim_circuit_with_qubit_dependent_noise_rate(logical_ckt_stim, noise_dict)
     # total_ckt = encoding_ckt + noise_ckt + logical_ckt_stim + noise_ckt
     total_ckt = noisy_encoding_ckt + noisy_logical_ckt
