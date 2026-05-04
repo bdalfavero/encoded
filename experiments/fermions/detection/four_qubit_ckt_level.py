@@ -13,7 +13,7 @@ from encoded.utils import get_observables
 from encoded.prep_circuit import cb_prep_circuit
 from encoded.htlg_interface import stim_pauli_string_to_htlg_str, htlg_circuit_to_stim
 from encoded.error_detection import run_with_error_detection
-from encoded.noise_models import QubitDependentNoiseGate
+from encoded.noise_models import QubitDependentNoiseGate, stim_circuit_with_qubit_dependent_noise_rate
 
 stabilizers = [
     stim.PauliString("Z_Z_"),
@@ -31,16 +31,16 @@ logical_h = input_dict["logical_h"]
 logical_cx = input_dict["logical_cx"]
 logical_ckt_stim = logical_h + logical_cx
 
-def noise_circuit(noise_rate: float) -> stim.Circuit:
-    stim_ckt = stim.Circuit()
-    stim_ckt.append("I", range(4))
-    cirq_ckt = stimcirq.stim_circuit_to_cirq_circuit(stim_ckt)
-    qs = cirq.LineQubit.range(4)
-    noise_map = {q: cirq.DepolarizingChannel(p=noise_rate).on(q) for q in qs}
-    noise_gate = QubitDependentNoiseGate(noise_map)
-    noisy_cirq_ckt = cirq_ckt.with_noise(noise_gate)
-    noisy_stim_ckt = stimcirq.cirq_circuit_to_stim_circuit(noisy_cirq_ckt)
-    return noisy_stim_ckt
+# def noise_circuit(noise_rate: float) -> stim.Circuit:
+#     stim_ckt = stim.Circuit()
+#     stim_ckt.append("I", range(4))
+#     cirq_ckt = stimcirq.stim_circuit_to_cirq_circuit(stim_ckt)
+#     qs = cirq.LineQubit.range(4)
+#     noise_map = {q: cirq.DepolarizingChannel(p=noise_rate).on(q) for q in qs}
+#     noise_gate = QubitDependentNoiseGate(noise_map)
+#     noisy_cirq_ckt = cirq_ckt.with_noise(noise_gate)
+#     noisy_stim_ckt = stimcirq.cirq_circuit_to_stim_circuit(noisy_cirq_ckt)
+#     return noisy_stim_ckt
 
 
 def stim_bits_to_floats(stim_bits: np.ndarray) -> np.ndarray:
@@ -54,8 +54,12 @@ def stim_bits_to_floats(stim_bits: np.ndarray) -> np.ndarray:
 
 
 def unmitigated_expectation_value(noise_rate: float, shots: int) -> float:
-    noise_ckt = noise_circuit(noise_rate)
-    total_ckt = encoding_ckt + noise_ckt + logical_ckt_stim + noise_ckt
+    # noise_ckt = noise_circuit(noise_rate)
+    noise_dict = {idx: noise_rate for idx in range(4)}
+    noisy_encoding_ckt = stim_circuit_with_qubit_dependent_noise_rate(encoding_ckt, noise_dict)
+    noisy_logical_ckt = stim_circuit_with_qubit_dependent_noise_rate(logical_ckt_stim, noise_dict)
+    # total_ckt = encoding_ckt + noise_ckt + logical_ckt_stim + noise_ckt
+    total_ckt = noisy_encoding_ckt + noisy_logical_ckt
     total_ckt.append("MPP", logical_xs[0] * logical_xs[1])
     sampler = total_ckt.compile_sampler()
     bits = sampler.sample(shots)
@@ -64,8 +68,12 @@ def unmitigated_expectation_value(noise_rate: float, shots: int) -> float:
 
 
 def mitigated_expectation_value(noise_rate: float, measure_noise_rate: float, shots: int) -> float:
-    noise_ckt = noise_circuit(noise_rate)
-    total_ckt = encoding_ckt + noise_ckt + logical_ckt_stim + noise_ckt
+    # noise_ckt = noise_circuit(noise_rate)
+    noise_dict = {idx: noise_rate for idx in range(4)}
+    noisy_encoding_ckt = stim_circuit_with_qubit_dependent_noise_rate(encoding_ckt, noise_dict)
+    noisy_logical_ckt = stim_circuit_with_qubit_dependent_noise_rate(logical_ckt_stim, noise_dict)
+    # total_ckt = encoding_ckt + noise_ckt + logical_ckt_stim + noise_ckt
+    total_ckt = noisy_encoding_ckt + noisy_logical_ckt
     bits = run_with_error_detection(total_ckt, stabilizers, logical_xs[0] * logical_xs[1], shots, measure_noise_rate)
     floats = stim_bits_to_floats(bits)
     return np.average(floats)

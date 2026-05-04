@@ -1,5 +1,7 @@
 from typing import Dict
+import stim
 import cirq
+import stimcirq
 
 class QubitDependentNoiseGate(cirq.Gate):
 
@@ -18,12 +20,24 @@ class QubitDependentNoiseGate(cirq.Gate):
             yield self._qubit_map[qubit]
 
 
+def stim_circuit_with_qubit_dependent_noise_rate(stim_ckt: stim.Circuit, noise_map: Dict[int, float]) -> stim.Circuit:
+    """Add depolarizing noise to a circuit with a different rate for each qubit."""
+
+    qubit_map = {}
+    for idx, noise_rate in noise_map.items():
+        q = cirq.LineQubit(idx)
+        qubit_map[q] = cirq.DepolarizingChannel(p=noise_rate).on(q)
+    noise_gate = QubitDependentNoiseGate(qubit_map)
+    cirq_circuit = stimcirq.stim_circuit_to_cirq_circuit(stim_ckt)
+    noisy_cirq_circuit = cirq_circuit.with_noise(noise_gate)
+    noisy_stim_circuit = stimcirq.cirq_circuit_to_stim_circuit(noisy_cirq_circuit)
+    return noisy_stim_circuit
+
+
 if __name__ == "__main__":
-    qs = cirq.LineQubit.range(3)
-    noise_map = {q: cirq.DepolarizingChannel(p=1. / (q.x + 1)).on(q) for q in qs}
-    noise_gate = QubitDependentNoiseGate(noise_map)
-    print(noise_gate.num_qubits())
-    circuit = cirq.Circuit()
-    for q in qs:
-        circuit.append(noise_gate.on(q))
-    print(circuit)
+    stim_ckt = stim.Circuit()
+    stim_ckt.append("H", 0)
+    stim_ckt.append("X", 1)
+    noise_map = {0: 0.1, 1: 0.2}
+    noisy_ckt = stim_circuit_with_qubit_dependent_noise_rate(stim_ckt, noise_map)
+    print(noisy_ckt)
