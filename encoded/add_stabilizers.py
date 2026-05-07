@@ -1,4 +1,4 @@
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Set, Collection
 from warnings import warn
 import itertools
 import functools
@@ -172,3 +172,68 @@ def build_code_randomly(
             warn(f"Exceeded max iterations ({max_iter}).")
             break
     return new_generators
+
+
+def prune_duplicate_pauli_strings(strings: List[stim.PauliString]) -> List[stim.PauliString]:
+    """stim.PauliString objects are not hashable, so you can't make a set of them. This function
+    removed duplicated from the list."""
+
+    new_strings = []
+    for pstring in strings:
+        if not any([pstring == ps for ps in new_strings]):
+            new_strings.append(pstring)
+    return new_strings
+
+
+def all_new_codes_for_errors(
+    generators: Collection[stim.PauliString], errors: List[stim.PauliString],
+    extra_support: Optional[stim.PauliString] = None
+) -> List[stim.PauliString]:
+    """Given a code and a set of errors to correct, enumerate all new stabilizers that we could add."""
+
+    A, b = _form_linear_system(generators, errors)
+    A_rref, b_rref = _boolean_rref(A, b)
+    solutions = enumerate_all_solutions(A_rref, b_rref)
+    candidate_strings = []
+    for x in solutions:
+        xs = x[:x.size // 2]
+        zs = x[(x.size // 2):]
+        pstring = stim.PauliString.from_numpy(xs=xs, zs=zs)
+        candidate_strings.append(pstring)
+    new_codes = []
+    for new_generator in candidate_strings:
+        if extra_support is not None:
+            new_generator += extra_support
+            # Add identity to all the original generators.
+            id_extra = stim.PauliString("I" * len(extra_support))
+            old_generators = [gen + id_extra for gen in generators]
+        else:
+            old_generators = deepcopy(generators)
+        for err in errors:
+            assert not new_generator.commutes(err), f"[{new_generator}, {err}] = 0"
+        new_generators = old_generators + [new_generator]
+        new_codes.append(new_generators)
+    return new_codes
+
+
+def random_depth_first_search(
+    stabilizers: List[stim.PauliString], errors: List[stim.PauliString],
+    steps: int, max_tries: int, seed_val: int
+) -> List[stim.PauliString]:
+    """Do a depth-first search, at each step picking a random error to anticommute with
+    and a random stabilizer from the list of systems of equations."""
+
+    best_code = deepcopy(stabilizers)
+    best_num_uncorredtable = len(get_uncorrectable_errors(stabilizers))
+
+    for _ in range()
+
+
+if __name__ == "__main__":
+    stabilizers = [stim.PauliString("ZZ_"), stim.PauliString("_ZZ")]
+    err = stim.PauliString("Z__")
+    new_codes = all_new_codes_for_errors(stabilizers, [err], extra_support=stim.PauliString("X"))
+    for new_code in new_codes:
+        print("New code:")
+        for stab in new_code:
+            print(stab)

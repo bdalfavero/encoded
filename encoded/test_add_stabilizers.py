@@ -1,7 +1,10 @@
 import unittest
 import numpy as np
 import stim
-from encoded.add_stabilizers import _form_linear_system, add_stabilizer, test_group_membership, knill_laflamme_cost_function, build_code_randomly
+from encoded.add_stabilizers import (
+    _form_linear_system, add_stabilizer, test_group_membership, knill_laflamme_cost_function,
+    build_code_randomly, prune_duplicate_pauli_strings
+)
 
 class TestLinearSystem(unittest.TestCase):
 
@@ -182,6 +185,34 @@ class TestBuildCodes(unittest.TestCase):
         new_stabilizers = build_code_randomly(stabilizers, errors, extra_support=stim.PauliString("Z"))
         target_stabilizers = [stim.PauliString("ZZ__"), stim.PauliString("XXZ_"), stim.PauliString("Z_XZ")]
         self.assertTrue(new_stabilizers == target_stabilizers)
+
+
+class TestPrune(unittest.TestCase):
+
+    def test_all_unequal(self):
+        pstrings = [
+            stim.PauliString("___"),
+            stim.PauliString("_XZ")
+        ]
+        pruned = prune_duplicate_pauli_strings(pstrings)
+        self.assertTrue(pruned == pstrings)
+
+    def test_one_duplicated(self):
+        pstrings = [
+            stim.PauliString("___"),
+            stim.PauliString("_XZ"),
+            stim.PauliString("Y"),
+            stim.PauliString("_XZ"),
+            stim.PauliString("Z_Z__")
+        ]
+        target = [
+            stim.PauliString("___"),
+            stim.PauliString("_XZ"),
+            stim.PauliString("Y"),
+            stim.PauliString("Z_Z__")
+        ]
+        pruned = prune_duplicate_pauli_strings(pstrings)
+        self.assertTrue(pruned == target)
 
 if __name__ == "__main__":
     unittest.main()
