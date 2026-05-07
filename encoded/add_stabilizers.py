@@ -39,8 +39,18 @@ def _form_linear_system(generators: List[stim.PauliString], errors: List[stim.Pa
 
 def add_stabilizer(
     generators: List[stim.PauliString], errors: List[stim.PauliString], extra_support: Optional[stim.PauliString]=None,
-    verbose: bool=False
+    verbose: bool=False, choose_solution_randomly: bool=False
 ) -> List[stim.PauliString]:
+    """Add a stabilizer to the code given a set of errors the new stabilizer should anticommute with.
+    
+    Arguments:
+    generators - Generators of the current code.
+    errors - The errors that the new stabilizer should anticommute with.
+    extra_suport - If None, no support is added on extra qubit. Otherwise, we add the Pauli to the new stabilizer.
+    verbose - Whether to print information while solving the system.
+    choose_solution_randomly - Whether to choose one of the solutions randomly (True) or choose the
+    solution with the lowest Pauli weight (False). Defaults to False."""
+
     A, b = _form_linear_system(generators, errors)
     if verbose:
         print("A=\n", A)
@@ -56,7 +66,10 @@ def add_stabilizer(
         zs = x[(x.size // 2):]
         pstring = stim.PauliString.from_numpy(xs=xs, zs=zs)
         candidate_strings.append(pstring)
-    new_generator = min(candidate_strings, key=lambda ps: ps.weight)
+    if choose_solution_randomly:
+        new_generator = candidate_strings[randrange(0, len(candidate_strings))]
+    else:
+        new_generator = min(candidate_strings, key=lambda ps: ps.weight)
     if extra_support is not None:
         new_generator += extra_support
         # Add identity to all the original generators.
@@ -218,22 +231,45 @@ def all_new_codes_for_errors(
 
 def random_depth_first_search(
     stabilizers: List[stim.PauliString], errors: List[stim.PauliString],
-    steps: int, max_tries: int, seed_val: int
+    extra_support: Optional[stim.PauliString]=None,
+    steps: int = 1, max_tries: int = 10, seed_val: int=137
 ) -> List[stim.PauliString]:
     """Do a depth-first search, at each step picking a random error to anticommute with
-    and a random stabilizer from the list of systems of equations."""
+    and a random stabilizer from the list of systems of equations.
+    
+    Arguments:
+    stabilizer - The initial stabilizers of the code.
+    errors - The errors the new code should correct.
+    steps - The number of new stabilizers to add.
+    max_tries - The number of times to randomly descend down the tree.
+    seed_val - Value for seeding RNG."""
+
+    seed(seed_val)
 
     best_code = deepcopy(stabilizers)
-    best_num_uncorredtable = len(get_uncorrectable_errors(stabilizers))
+    best_num_uncorredtable = len(get_uncorrectable_errors(stabilizers, errors))
 
-    for _ in range()
+    for _ in range(max_tries):
+        temp_stabilizers = deepcopy(stabilizers)
+        for _ in range(steps):
+            uncorrectables = get_uncorrectable_errors(temp_stabilizers, errors)
+            new_err = uncorrectables[randrange(0, len(uncorrectables))]
+            temp_stabilizers = add_stabilizer(
+                temp_stabilizers, [new_err], extra_support=extra_support, choose_solution_randomly=True
+            )
+        uncorrectables = get_uncorrectable_errors(temp_stabilizers, errors)
+        if len(uncorrectables) < best_num_uncorredtable:
+            best_code = deepcopy(temp_stabilizers)
+            best_num_uncorredtable = len(uncorrectables)
+    return best_code
 
 
 if __name__ == "__main__":
-    stabilizers = [stim.PauliString("ZZ_"), stim.PauliString("_ZZ")]
-    err = stim.PauliString("Z__")
-    new_codes = all_new_codes_for_errors(stabilizers, [err], extra_support=stim.PauliString("X"))
-    for new_code in new_codes:
-        print("New code:")
-        for stab in new_code:
-            print(stab)
+    stabilizers = [stim.PauliString("ZZ")]
+    errors = [stim.PauliString("X_"), stim.PauliString("_X")]
+    new_stabilizers = random_depth_first_search(
+        stabilizers, errors, extra_support=stim.PauliString("Z"),
+        steps=1
+    )
+    for stab in new_stabilizers:
+        print(stab)

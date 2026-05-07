@@ -3,7 +3,7 @@ import numpy as np
 import stim
 from encoded.add_stabilizers import (
     _form_linear_system, add_stabilizer, test_group_membership, knill_laflamme_cost_function,
-    build_code_randomly, prune_duplicate_pauli_strings
+    build_code_randomly, prune_duplicate_pauli_strings, random_depth_first_search
 )
 
 class TestLinearSystem(unittest.TestCase):
@@ -213,6 +213,19 @@ class TestPrune(unittest.TestCase):
         ]
         pruned = prune_duplicate_pauli_strings(pstrings)
         self.assertTrue(pruned == target)
+
+
+class TestRandomDescent(unittest.TestCase):
+
+    def test_reptition(self):
+        stabilizers = [stim.PauliString("ZZ")]
+        errors = [stim.PauliString("X_"), stim.PauliString("_X")]
+        new_stabilizers = random_depth_first_search(
+            stabilizers, errors, extra_support=stim.PauliString("Z"),
+            steps=1
+        )
+        target_stabilizers = [stim.PauliString("ZZ_"), stim.PauliString("_ZZ")]
+        self.assertEqual(new_stabilizers, target_stabilizers)
 
 if __name__ == "__main__":
     unittest.main()
