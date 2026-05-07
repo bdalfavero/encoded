@@ -227,5 +227,17 @@ class TestRandomDescent(unittest.TestCase):
         target_stabilizers = [stim.PauliString("ZZ_"), stim.PauliString("_ZZ")]
         self.assertEqual(new_stabilizers, target_stabilizers)
 
+    def test_expanded_repetition(self):
+        stabilizers = [stim.PauliString("ZZ_"), stim.PauliString("_ZZ")]
+        errors = [stim.PauliString("___"), stim.PauliString("Z__"), stim.PauliString("_Z_"), stim.PauliString("__Z")]
+        new_stabilizers = random_depth_first_search(
+            stabilizers, errors, extra_support=stim.PauliString("X"),
+            steps=1, seed_val=12
+        )
+        for stab in new_stabilizers:
+            print(stab)
+        target_stabilizers = [stim.PauliString("ZZ__"), stim.PauliString("_ZZ_"), stim.PauliString("YXXX")]
+        self.assertEqual(new_stabilizers, target_stabilizers)
+
 if __name__ == "__main__":
     unittest.main()

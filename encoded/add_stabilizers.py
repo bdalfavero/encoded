@@ -249,10 +249,17 @@ def random_depth_first_search(
     best_code = deepcopy(stabilizers)
     best_num_uncorredtable = len(get_uncorrectable_errors(stabilizers, errors))
 
-    for _ in range(max_tries):
+    for i in range(max_tries):
+        # print(f"On try {i}.")
         temp_stabilizers = deepcopy(stabilizers)
-        for _ in range(steps):
+        for j in range(steps):
+            # print(f"On step {j}.")
+            # for stab in temp_stabilizers:
+            #     print(stab)
             uncorrectables = get_uncorrectable_errors(temp_stabilizers, errors)
+            # print(f"Code has {len(uncorrectables)} uncorrectable errors.")
+            if len(uncorrectables) == 0:
+                break
             new_err = uncorrectables[randrange(0, len(uncorrectables))]
             temp_stabilizers = add_stabilizer(
                 temp_stabilizers, [new_err], extra_support=extra_support, choose_solution_randomly=True
