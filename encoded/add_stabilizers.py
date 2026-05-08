@@ -22,14 +22,29 @@ def _form_linear_system(generators: List[stim.PauliString], errors: List[stim.Pa
     """Form the linear system that requires the new generator to commute with the existing
     generators and anticommute with the given errors."""
 
-    # for gen in generators:
-    #     print(gen)
-    # for err in errors:
-    #     print(err)
+    max_nq_gen = max([len(gen) for gen in generators])
+    max_nq_err = max([len(err) for err in errors])
+    max_nq = max(max_nq_gen, max_nq_err)
 
-    generator_matrix = generators_to_matrix(generators)
-    error_matrix = generators_to_matrix(errors)
-    pstring_matrix = np.hstack((generator_matrix, error_matrix))
+    generator_matrix = generators_to_matrix(generators, max_nq=max_nq)
+    error_matrix = generators_to_matrix(errors, max_nq=max_nq)
+    try:
+        pstring_matrix = np.hstack((generator_matrix, error_matrix))
+    except ValueError as e:
+        print("Failed on the hstack.")
+        print("generators=")
+        for gen in generators:
+            print(gen)
+        print("errors=")
+        for err in errors:
+            print(err)
+        print("generator_matrix=")
+        print(generator_matrix)
+        print(f"with shape {generator_matrix.shape}")
+        print("error_matrix=")
+        print(error_matrix)
+        print(f"with shape {error_matrix.shape}")
+        raise e
     nq = max([len(ps) for ps in generators + errors])
     lamb = metric_tensor(nq)
     A = pstring_matrix.T @ lamb

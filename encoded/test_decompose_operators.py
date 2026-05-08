@@ -2,9 +2,32 @@ import unittest
 import numpy as np
 import stim
 from encoded.decompose_operators import (
+    generators_to_matrix,
     decompose_operator_to_product,
     decompose_pauli_to_logical_operators
 )
+
+
+class TestGenToMat(unittest.TestCase):
+
+    def test_zzi_izz(self):
+        generators = [stim.PauliString("ZZ_"), stim.PauliString("_ZZ")]
+        target_matrix = np.array([
+            [False, False, False, True, True, False],
+            [False, False, False, False, True, True]
+        ]).T
+        matrix = generators_to_matrix(generators)
+        self.assertTrue(np.allclose(matrix, target_matrix))
+
+    def test_zzi_izz_nq4(self):
+        generators = [stim.PauliString("ZZ_"), stim.PauliString("_ZZ")]
+        target_matrix = np.array([
+            [False, False, False, False, True, True, False, False],
+            [False, False, False, False, False, True, True, False]
+        ]).T
+        matrix = generators_to_matrix(generators, max_nq=4)
+        self.assertTrue(np.allclose(matrix, target_matrix))
+
 
 class TestDecompose(unittest.TestCase):
 

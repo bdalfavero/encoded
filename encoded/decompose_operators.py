@@ -1,13 +1,21 @@
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from math import prod
 import numpy as np
 import stim
 from encoded.binary_linalg import solve_boolean_system
 
-def generators_to_matrix(generators: List[stim.PauliString]) -> np.ndarray:
+def generators_to_matrix(generators: List[stim.PauliString], max_nq: Optional[int] = None) -> np.ndarray:
+    if max_nq is not None:
+        for ps in generators:
+            assert len(ps) <= max_nq, f"Passed max_nq={max_nq} but pstring {ps} has length {len(ps)}."
+
     rows = []
     for ps in generators:
-        x, z = ps.to_numpy()
+        if max_nq is None:
+            ps_copy = ps
+        else:
+            ps_copy = ps + stim.PauliString('_' * (max_nq - len(ps)))
+        x, z = ps_copy.to_numpy()
         rows.append(np.hstack((x, z)))
     return np.vstack(rows).T
 

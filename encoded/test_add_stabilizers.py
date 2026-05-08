@@ -27,6 +27,25 @@ class TestLinearSystem(unittest.TestCase):
         ])
         b_target = np.array([False, False, True])
         self.assertTrue(np.allclose(A, A_target) and np.allclose(b, b_target))
+    
+    def test_errors_too_short(self):
+        """If we pass errors with support on less qubits, they should be lengthened."""
+
+        stabilizers = [
+            stim.PauliString("ZZI"),
+            stim.PauliString("IZZ")
+        ]
+        errs = [
+            stim.PauliString("ZI") # N.b. length 3 vs. length 3 for generators.
+        ]
+        A, b = _form_linear_system(stabilizers, errs)
+        A_target = np.array([
+            [True, True, False, False, False, False],
+            [False, True, True, False, False, False],
+            [True, False, False, False, False, False]
+        ])
+        b_target = np.array([False, False, True])
+        self.assertTrue(np.allclose(A, A_target) and np.allclose(b, b_target))
 
 
 class TestAddStabilizer(unittest.TestCase):
