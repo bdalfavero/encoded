@@ -1,3 +1,4 @@
+from random import choices
 import stim
 from encoded.add_stabilizers import random_depth_first_search, test_group_membership
 
@@ -10,19 +11,21 @@ def all_single_qubit_errors(n: int):
             all_errors.append(stim.PauliString(mask))
     return all_errors
 
-stabilizers = [
-    stim.PauliString("ZZ_______"),
-    stim.PauliString("_ZZ______"),
-    stim.PauliString("___ZZ____"),
-    stim.PauliString("____ZZ___"),
-    stim.PauliString("______ZZ_"),
-    stim.PauliString("_______ZZ")
-]
-errors = all_single_qubit_errors(9)
-new_stabilizers = random_depth_first_search(stabilizers, errors, steps=2, max_tries=20)
-print(f"New code has {len(new_stabilizers)} stabilizers.")
-for stab in new_stabilizers:
-    print(stab)
+for seed_val in choices(range(1000), k=100):
+    print(f"Running with seed {seed_val}.")
+    stabilizers = [
+        stim.PauliString("ZZ_______"),
+        stim.PauliString("_ZZ______"),
+        stim.PauliString("___ZZ____"),
+        stim.PauliString("____ZZ___"),
+        stim.PauliString("______ZZ_"),
+        stim.PauliString("_______ZZ")
+    ]
+    errors = all_single_qubit_errors(9)
+    new_stabilizers = random_depth_first_search(stabilizers, errors, steps=2, max_tries=20)
+    print(f"New code has {len(new_stabilizers)} stabilizers.")
+    for stab in new_stabilizers:
+        print(stab)
 
 for s1 in new_stabilizers:
     for s2 in new_stabilizers:
