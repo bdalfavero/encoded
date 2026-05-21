@@ -253,8 +253,6 @@ class TestRandomDescent(unittest.TestCase):
             stabilizers, errors, extra_support=stim.PauliString("X"),
             steps=1, seed_val=12
         )
-        for stab in new_stabilizers:
-            print(stab)
         target_stabilizers = [stim.PauliString("ZZ__"), stim.PauliString("_ZZ_"), stim.PauliString("YXXX")]
         self.assertEqual(new_stabilizers, target_stabilizers)
 
