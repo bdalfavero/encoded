@@ -286,6 +286,51 @@ def random_depth_first_search(
     return best_code
 
 
+class StabilizerCode:
+    """A stabilizer code is defined as a list of its stabilizers. This is just here so we can hash
+    codes as objects to put them on a graph, since stim.PauliString objects are not serializable."""
+
+    def __init__(self, stabilizers: List[stim.PauliString]):
+        self.stabilizers = stabilizers
+    
+    def __repr__(self):
+        return ';'.join([str(ps) for ps in self.stabilizers])
+    
+    def __hash__(self):
+        return hash(repr(self))
+
+
+def depth_first_with_backtracking(
+    stabilizers: List[stim.PauliString], errors: List[stim.PauliString],
+    extra_support: Optional[stim.PauliString]=None,
+    steps: int = 1, max_tries: int = 10, seed_val: int=137
+) -> List[stim.PauliString]:
+    """Construct a quantum code for some errors given the initial set of stabilizers using
+    a depth-first search of the tree of solutions. If the bottom of the tree is reached but not all errors are
+    correctable, then we start to go up the tree and choose a different path down."""
+
+    seed(seed_val)
+
+    best_code = deepcopy(stabilizers)
+    best_num_uncorredtable = len(get_uncorrectable_errors(stabilizers, errors))
+
+    for i in range(max_tries):
+        temp_stabilizers = deepcopy(stabilizers)
+        for j in range(steps):
+            uncorrectables = get_uncorrectable_errors(temp_stabilizers, errors)
+            if len(uncorrectables) == 0:
+                break
+            new_err = uncorrectables[randrange(0, len(uncorrectables))]
+            temp_stabilizers = add_stabilizer(
+                temp_stabilizers, [new_err], extra_support=extra_support, choose_solution_randomly=True
+            )
+        uncorrectables = get_uncorrectable_errors(temp_stabilizers, errors)
+        if len(uncorrectables) < best_num_uncorredtable:
+            best_code = deepcopy(temp_stabilizers)
+            best_num_uncorredtable = len(uncorrectables)
+    return best_code
+
+
 if __name__ == "__main__":
     stabilizers = [stim.PauliString("ZZ")]
     errors = [stim.PauliString("X_"), stim.PauliString("_X")]
