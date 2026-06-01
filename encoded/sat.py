@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 import numpy as np
 import stim
 from pysat.formula import Atom, Formula, And, Or, XOr, Neg
@@ -29,6 +29,45 @@ class VariableString:
     @property
     def atoms(self):
         return (self._x_atoms, self._z_atoms)
+    
+    def assign_from_model(self, model: List[int]) -> Tuple[np.array, np.array]:
+        """Given a satisfying assignment from pysat, get the x and z components of the string
+        as binary arrays. e.g. if the variable string has atoms with names ([1, 2, 3], [4, 5, 6])
+        and the assignment is [-1, 2, 3, -4, -5, -6, 10, -11], then return ([False, True, True], [False, False, False])."""
+
+        x_names = [x_atom.name for x_atom in self._x_atoms]
+        z_names = [z_atom.name for z_atom in self._z_atoms]
+        x_bools = [None] * len(x_names)
+        z_bools = [None] * len(z_names)
+        for assignment in model:
+            if -assignment in x_names:
+                i = x_names.index(-assignment)
+                x_bools[i] = False
+            if assignment in x_names:
+                i = x_names.index(assignment)
+                x_bools[i] = True
+            if -assignment in z_names:
+                i = z_names.index(-assignment)
+                z_bools[i] = False
+            if assignment in z_names:
+                i = z_names.index(assignment)
+                z_bools[i] = True
+        for i, x_bool in enumerate(x_bools):
+            if x_bool is None:
+                raise ValueError(f"Value at position {i} of x_bools is None.")
+        for i, z_bool in enumerate(z_bools):
+            if z_bool is None:
+                raise ValueError(f"Value at position {i} of z_bools is None.")
+        return (np.array(x_bools), np.array(z_bools))
+    
+    def assign_to_stim(self, model: List[int]) -> stim.PauliString:
+        xs, zs = self.assign_from_model(model)
+        return stim.PauliString.from_numpy(xs=xs, zs=zs)
+
+    def non_weight_zero_constraint(self):
+        """Build a formula that asserts that this string cannot be the identity."""
+
+        return Or(*self._x_atoms, *self._z_atoms)
 
 
 class CommutationConstraint:
@@ -68,12 +107,14 @@ if __name__ == "__main__":
     code = StabilizerCode.from_stim(stabilizers)
     var_string = VariableString(3, 0)
     comm_constraint = CommutationConstraint(code, True)
-    formula = comm_constraint.to_formula(var_string)
+    commute_formula = comm_constraint.to_formula(var_string)
+    weight_zero_formula = var_string.non_weight_zero_constraint()
+    formula = And(weight_zero_formula, commute_formula)
     print(formula)
     formula.clausify()
     print("Atoms:")
     for atom in formula.atoms():
-        print(atom)
+        print(atom.name)
     g = Glucose3()
     print("Clauses:")
     for clause in list(formula):
@@ -81,4 +122,7 @@ if __name__ == "__main__":
         g.add_clause(clause)
     print(f"Solving...")
     print(g.solve())
-    print(g.get_model())
+    model = g.get_model()
+    print(model)
+    pstring = var_string.assign_to_stim(model)
+    print("Found string", pstring)
