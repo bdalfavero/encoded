@@ -45,7 +45,7 @@ class StabilizerCode:
             new_xs = xs
             new_zs = zs
         elif m > 0:
-            zeros_pad = np.zeros((self.check_matrix.shape[0], m))
+            zeros_pad = np.zeros((self.check_matrix.shape[0], m), dtype=bool)
             new_xs = np.hstack((xs, zeros_pad))
             new_zs = np.hstack((zs, zeros_pad))
         else:
