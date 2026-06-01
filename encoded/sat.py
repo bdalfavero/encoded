@@ -1,4 +1,5 @@
 from typing import List, Tuple
+from copy import deepcopy
 from warnings import warn
 import numpy as np
 import stim
@@ -74,9 +75,10 @@ class VariableString:
 class CommutationConstraint:
     """A constraints that says the new stabilizers should (anti-)commute with some set of Pauli strings."""
 
-    def __init__(self, strings: StabilizerCode, commutes: bool=True):
+    def __init__(self, strings: StabilizerCode, commutes: bool=True, all_commute: bool=True):
         self._strings = strings
         self._commutes = commutes
+        self._all_commute = all_commute
     
     @property
     def n(self):
@@ -112,10 +114,13 @@ class CommutationConstraint:
                     subformulas.append(Neg(XOr(*x_ands, *z_ands)))
                 else:
                     subformulas.append(XOr(*x_ands, *z_ands))
-        return And(*subformulas)
+        if self._all_commute:
+            return And(*subformulas)
+        else:
+            return Or(*subformulas)
 
 
-def solve_single_stabilizer(code: StabilizerCode, err: stim.PauliString, pad: bool=False) -> stim.PauliString:
+def solve_single_stabilizer(code: StabilizerCode, err: stim.PauliString, pad: bool=False, new_support: str="Z") -> stim.PauliString:
     """Find a new stabilizer so that the code can correct a new error of our choice."""
 
     if pad:
@@ -128,7 +133,7 @@ def solve_single_stabilizer(code: StabilizerCode, err: stim.PauliString, pad: bo
     var_string = VariableString(n, 0)
     nwz_formula = var_string.non_weight_zero_constraint()
     code_commute_constraint = CommutationConstraint(code, True)
-    error_anticommute_constraint = CommutationConstraint(error_strings, False)
+    error_anticommute_constraint = CommutationConstraint(error_strings, False, all_commute=False)
     code_commute_formula = code_commute_constraint.to_formula(var_string)
     error_formula = error_anticommute_constraint.to_formula(var_string)
     total_formula = And(code_commute_formula, error_formula, nwz_formula)
@@ -139,7 +144,20 @@ def solve_single_stabilizer(code: StabilizerCode, err: stim.PauliString, pad: bo
     if not g.solve():
         warn("Solve did not succeed.")
     model = g.get_model()
-    return var_string.assign_to_stim(model)
+    new_pstring = var_string.assign_to_stim(model)
+    # Modify the Pauli on the last (added) qubit if needed.
+    mask = list(new_pstring)
+    new_mask = deepcopy(mask)
+    if pad:
+        if new_support == "Z":
+            new_mask[-1] = 3
+            new_pstring = stim.PauliString(new_mask)
+        elif new_support == "X":
+            new_mask[-1] = 1
+            new_pstring = stim.PauliString(new_mask)
+        else:
+            raise ValueError(f"new_support must be X or Z, but got {new_support}")
+    return new_pstring
 
 if __name__ == "__main__":
     stabilizers = [stim.PauliString("ZZI")]
