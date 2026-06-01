@@ -2,6 +2,7 @@ from typing import List
 import numpy as np
 import stim
 from pysat.formula import Atom, Formula, And, Or, XOr, Neg
+from pysat.solvers import Glucose3
 from encoded.stabilizer_code import StabilizerCode
 
 class VariableString:
@@ -70,4 +71,14 @@ if __name__ == "__main__":
     formula = comm_constraint.to_formula(var_string)
     print(formula)
     formula.clausify()
-    print(list(formula))
+    print("Atoms:")
+    for atom in formula.atoms():
+        print(atom)
+    g = Glucose3()
+    print("Clauses:")
+    for clause in list(formula):
+        print(clause)
+        g.add_clause(clause)
+    print(f"Solving...")
+    print(g.solve())
+    print(g.get_model())
