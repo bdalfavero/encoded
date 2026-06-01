@@ -97,10 +97,21 @@ class CommutationConstraint:
             # and j1, ..., js are the indices for which rx[j] = 1.
             x_ands = [z_vars[i] for i in range(self.n) if xs[i]]
             z_ands = [x_vars[i] for i in range(self.n) if zs[i]]
-            if self._commutes:
-                subformulas.append(Neg(XOr(*x_ands, *z_ands)))
+            if len(x_ands) == 1 and len(z_ands) == 0:
+                if self._commutes:
+                    subformulas.append(Neg(*x_ands))
+                else:
+                    subformulas.append(*x_ands)
+            elif len(x_ands) == 0 and len(z_ands) == 1:
+                if self._commutes:
+                    subformulas.append(Neg(*z_ands))
+                else:
+                    subformulas.append(*z_ands)
             else:
-                subformulas.append(XOr(*x_ands, *z_ands))
+                if self._commutes:
+                    subformulas.append(Neg(XOr(*x_ands, *z_ands)))
+                else:
+                    subformulas.append(XOr(*x_ands, *z_ands))
         return And(*subformulas)
 
 
@@ -133,6 +144,6 @@ def solve_single_stabilizer(code: StabilizerCode, err: stim.PauliString, pad: bo
 if __name__ == "__main__":
     stabilizers = [stim.PauliString("ZZI")]
     code = StabilizerCode.from_stim(stabilizers)
-    err = stim.PauliString("XXI")
+    err = stim.PauliString("IIX")
     new_stabilizer = solve_single_stabilizer(code, err, pad=False)
     print(f"New stabilizer:", new_stabilizer)
