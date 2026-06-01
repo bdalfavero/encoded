@@ -1,6 +1,7 @@
 from typing import List, Tuple
 from copy import deepcopy
 from warnings import warn
+from itertools import combinations, product
 import numpy as np
 import stim
 from pysat.formula import Atom, Formula, And, Or, XOr, Neg
@@ -159,9 +160,44 @@ def solve_single_stabilizer(code: StabilizerCode, err: stim.PauliString, pad: bo
             raise ValueError(f"new_support must be X or Z, but got {new_support}")
     return new_pstring
 
+
+def enumerate_errors(n: int, w: int) -> List[stim.PauliString]:
+    """Enumerate all errors on n qubits with Pauli weight w."""
+
+    errs = []
+    for support in combinations(range(n), w):
+        for paulis in product(range(1, 4), repeat=w):
+            mask = [0] * n
+            for index, pauli in zip(support, paulis):
+                mask[index] = pauli
+            errs.append(stim.PauliString(mask))
+    return errs
+
+
+def increase_distance(code: StabilizerCode, d: int, m: int) -> List[stim.PauliString]:
+    """Add m new stabilizers on m new qubits to increase the distance of a code by 1."""
+
+    n_prime = code.n + m
+    code.pad(m)
+    err_strings = StabilizerCode.from_stim(enumerate_errors(n_prime, d))
+    var_strings = [VariableString(n_prime, i) for i in range(m)]
+    nwz_formulas = [var_string.non_weight_zero_constraint() for var_string in var_strings]
+    code_commute_constraint = CommutationConstraint(code, True)
+    error_anticommute_constraint = CommutationConstraint(err_strings, False, all_commute=False)
+    code_commute_formulas = [code_commute_constraint.to_formula(var_string) for var_string in var_strings]
+    error_formulas = [error_anticommute_constraint.to_formula(var_string) for var_string in var_strings]
+    total_formula = And(*code_commute_formulas, *error_formulas, *nwz_formulas)
+    total_formula.clausify()
+    g = Glucose3()
+    for clause in list(total_formula):
+        g.add_clause(clause)
+    if not g.solve():
+        warn("Solve did not succeed.")
+    model = g.get_model()
+    new_pstrings = [var_string.assign_to_stim(model) for var_string in var_strings]
+    return new_pstrings
+
 if __name__ == "__main__":
-    stabilizers = [stim.PauliString("ZZI")]
-    code = StabilizerCode.from_stim(stabilizers)
-    err = stim.PauliString("IIX")
-    new_stabilizer = solve_single_stabilizer(code, err, pad=False)
-    print(f"New stabilizer:", new_stabilizer)
+    all_errs = enumerate_errors(4, 2)
+    for err in all_errs:
+        print(err)
